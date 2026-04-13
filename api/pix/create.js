@@ -1,4 +1,5 @@
 import { DEFAULT_API_KEYS, getSetting, normalizeApiKeys } from '../_lib/settings.js';
+import { trackMetricEvent } from '../_lib/metrics.js';
 
 function normalizeString(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -311,17 +312,42 @@ export default async function handler(req, res) {
       });
     }
 
+    const transactionKey = normalized.transactionId || externalRef;
+    const customerName = normalizeString(customer.name);
+    const itemTitle = normalizedItems[0]?.title || 'Pedido AquaGas';
+    const amountValue = Math.round(Number(amount || 0)) / 100;
+    const amountStr = `R$${amountValue.toFixed(2).replace('.', ',')}`;
+
+    try {
+      await trackMetricEvent({
+        sessionId: transactionKey,
+        eventName: 'Order_Generated',
+        metadata: {
+          transactionId: normalized.transactionId || null,
+          externalRef,
+          amount: amountValue,
+          customerName,
+          itemTitle,
+          paymentMethod: 'pix',
+          status: 'waiting_payment',
+          description: `${customerName} • ${amountStr} • pedido gerado`
+        }
+      });
+    } catch (trackingError) {
+      console.warn('[Metrics] Falha ao registrar pedido gerado:', trackingError.message);
+    }
+
     return res.status(200).json({
       ok: true,
       pixCode: normalized.pixCode,
       qrCodeImage: normalized.qrCodeImage,
       expirationDate: normalized.expirationDate,
-      transactionId: normalized.transactionId,
+      transactionId: transactionKey,
       pix: {
         qrcode: normalized.pixCode,
         qrCodeImage: normalized.qrCodeImage,
         expirationDate: normalized.expirationDate,
-        transactionId: normalized.transactionId
+        transactionId: transactionKey
       },
       raw: data
     });

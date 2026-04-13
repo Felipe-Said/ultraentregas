@@ -6,8 +6,8 @@ import {
 } from '../_lib/settings.js';
 import { getSupabase } from '../_lib/supabase.js';
 
-async function hasTrackedPurchase(transactionId) {
-  if (!transactionId) {
+async function hasTrackedPurchase(transactionKey) {
+  if (!transactionKey) {
     return false;
   }
 
@@ -16,7 +16,7 @@ async function hasTrackedPurchase(transactionId) {
     .from('metrics_events')
     .select('*', { count: 'exact', head: true })
     .eq('event_name', 'Purchase')
-    .eq('user_id', transactionId);
+    .eq('user_id', transactionKey);
 
   if (error) {
     throw error;
@@ -36,10 +36,12 @@ export default async function handler(req, res) {
     const status = transaction?.status || payload?.status || '';
     const paymentMethod = transaction?.paymentMethod || payload?.paymentMethod || '';
     const transactionId = String(transaction?.id || payload?.objectId || payload?.id || '');
+    const externalRef = String(transaction?.externalRef || payload?.externalRef || '');
+    const transactionKey = transactionId || externalRef;
     const isPaid = status === 'paid' && (!paymentMethod || paymentMethod === 'pix');
 
     if (isPaid) {
-      if (await hasTrackedPurchase(transactionId)) {
+      if (await hasTrackedPurchase(transactionKey)) {
         return res.status(200).json({ ok: true, duplicate: true });
       }
 
@@ -51,10 +53,11 @@ export default async function handler(req, res) {
       const config = normalizeTrackingConfig(await getSetting('tracking_config', DEFAULT_TRACKING_CONFIG));
 
       await trackMetricEvent({
-        sessionId: transactionId || null,
+        sessionId: transactionKey || null,
         eventName: 'Purchase',
         metadata: {
           transactionId,
+          externalRef,
           status,
           paymentMethod,
           amount,

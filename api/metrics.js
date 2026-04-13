@@ -8,7 +8,8 @@ export default async function handler(req, res) {
 
   try {
     requireAdmin(req);
-    const metrics = await getMetricsSummary();
+    const requestedDate = Array.isArray(req.query?.date) ? req.query.date[0] : req.query?.date;
+    const metrics = await getMetricsSummary(requestedDate);
     return res.status(200).json(metrics);
   } catch (error) {
     const status = /token/i.test(error.message) ? 401 : 500;
