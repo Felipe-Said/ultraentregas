@@ -6,6 +6,15 @@ let gtags = [];
 let pushcuts = [];
 let dashboardRefreshTimer = null;
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function updateApiStatusBadges(keys = {}) {
   const hasKeys = Boolean(keys.publicKey && keys.secretKey);
   const topBadge = document.getElementById('api-status-badge');
@@ -277,6 +286,7 @@ async function loadSettings() {
 }
 
 async function saveSettings(feedbackEl) {
+  syncTrackingStateFromDom();
   const payload = { pixels: fbPixels, gtags, pushcuts };
 
   try {
@@ -302,6 +312,7 @@ async function saveSettings(feedbackEl) {
 }
 
 async function sendPushcutTest(index, button) {
+  syncPushcutListFromDom();
   const pushcut = pushcuts[index];
   const feedbackEl = document.getElementById('pushcut-save-feedback');
   const url = typeof pushcut?.url === 'string' ? pushcut.url.trim() : '';
@@ -348,6 +359,65 @@ async function sendPushcutTest(index, button) {
   }
 }
 
+function syncPixelListFromDom() {
+  const rows = document.querySelectorAll('#fb-pixels-list .pixel-row');
+
+  if (!rows.length) {
+    return;
+  }
+
+  fbPixels = Array.from(rows).map((row) => ({
+    id: row.querySelector('[data-field="id"]')?.value?.trim() || '',
+    token: row.querySelector('[data-field="token"]')?.value?.trim() || ''
+  }));
+}
+
+function syncGtagListFromDom() {
+  const rows = document.querySelectorAll('#gtag-list .gtag-row');
+
+  if (!rows.length) {
+    return;
+  }
+
+  gtags = Array.from(rows).map((row) => ({
+    id: row.querySelector('[data-field="id"]')?.value?.trim() || '',
+    label: row.querySelector('[data-field="label"]')?.value?.trim() || ''
+  }));
+}
+
+function syncPushcutListFromDom() {
+  const rows = document.querySelectorAll('#pushcut-list .pushcut-row');
+
+  if (!rows.length) {
+    return;
+  }
+
+  pushcuts = Array.from(rows).map((row) => ({
+    url: row.querySelector('[data-field="url"]')?.value?.trim() || ''
+  }));
+}
+
+function syncTrackingStateFromDom() {
+  syncPixelListFromDom();
+  syncGtagListFromDom();
+  syncPushcutListFromDom();
+}
+
+function bindInputState(listSelector, collection, fields) {
+  document.querySelectorAll(`${listSelector} [data-index]`).forEach((input) => {
+    input.addEventListener('input', (event) => {
+      const index = Number(event.currentTarget.dataset.index);
+      const field = event.currentTarget.dataset.field;
+
+      if (!Number.isInteger(index) || !field || !collection[index] || !fields.includes(field)) {
+        return;
+      }
+
+      collection[index][field] = event.currentTarget.value;
+    });
+  });
+}
+
 window.addPixelRow = () => {
   fbPixels.push({ id: '', token: '' });
   renderPixelList();
@@ -367,14 +437,15 @@ function renderPixelList() {
     listContainer.innerHTML = fbPixels.map((pixel, index) => `
       <div class="pixel-row admin-card" style="padding: 1.25rem;">
         <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
-          <div><label class="admin-label">Pixel ID</label><input type="text" oninput="fbPixels[${index}].id=this.value" class="admin-input mono" value="${pixel.id}" /></div>
-          <div><label class="admin-label">Token (CAPI)</label><input type="password" oninput="fbPixels[${index}].token=this.value" class="admin-input mono" value="${pixel.token}" /></div>
+          <div><label class="admin-label">Pixel ID</label><input type="text" data-index="${index}" data-field="id" class="admin-input mono" value="${escapeHtml(pixel.id)}" /></div>
+          <div><label class="admin-label">Token (CAPI)</label><input type="password" data-index="${index}" data-field="token" class="admin-input mono" value="${escapeHtml(pixel.token)}" /></div>
           <button onclick="removePixelRow(${index})" class="admin-btn admin-btn-outline" style="color: #ef4444;"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
         </div>
       </div>
     `).join('');
   }
 
+  bindInputState('#fb-pixels-list', fbPixels, ['id', 'token']);
   lucide.createIcons();
 }
 
@@ -401,14 +472,15 @@ function renderGtagList() {
     listContainer.innerHTML = gtags.map((gtag, index) => `
       <div class="gtag-row admin-card" style="padding: 1.25rem; border-color: rgba(66,133,244,.15);">
         <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
-          <div><label class="admin-label">Google Tag ID</label><input type="text" oninput="gtags[${index}].id=this.value" class="admin-input mono" value="${gtag.id}" /></div>
-          <div><label class="admin-label">Label</label><input type="text" oninput="gtags[${index}].label=this.value" class="admin-input mono" value="${gtag.label}" /></div>
+          <div><label class="admin-label">Google Tag ID</label><input type="text" data-index="${index}" data-field="id" class="admin-input mono" value="${escapeHtml(gtag.id)}" /></div>
+          <div><label class="admin-label">Label</label><input type="text" data-index="${index}" data-field="label" class="admin-input mono" value="${escapeHtml(gtag.label)}" /></div>
           <button onclick="removeGtagRow(${index})" class="admin-btn admin-btn-outline" style="color: #ef4444;"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
         </div>
       </div>
     `).join('');
   }
 
+  bindInputState('#gtag-list', gtags, ['id', 'label']);
   lucide.createIcons();
 }
 
@@ -435,7 +507,7 @@ function renderPushcutList() {
     listContainer.innerHTML = pushcuts.map((pushcut, index) => `
       <div class="pushcut-row admin-card" style="padding: 1.25rem;">
         <div style="display: flex; gap: 0.75rem; align-items: center;">
-          <div style="flex: 1;"><label class="admin-label">Webhook URL</label><input type="url" oninput="pushcuts[${index}].url=this.value" class="admin-input mono" value="${pushcut.url}" /></div>
+          <div style="flex: 1;"><label class="admin-label">Webhook URL</label><input type="url" data-index="${index}" data-field="url" class="admin-input mono" value="${escapeHtml(pushcut.url)}" /></div>
           <button onclick="removePushcutRow(${index})" class="admin-btn admin-btn-outline" style="color: #ef4444; margin-top: 1.2rem;"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
         </div>
         <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem;">
@@ -447,6 +519,7 @@ function renderPushcutList() {
     `).join('');
   }
 
+  bindInputState('#pushcut-list', pushcuts, ['url']);
   lucide.createIcons();
 }
 
