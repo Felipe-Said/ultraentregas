@@ -4,6 +4,26 @@ import {
   getSetting,
   normalizeTrackingConfig
 } from '../_lib/settings.js';
+import { getSupabase } from '../_lib/supabase.js';
+
+async function hasTrackedPurchase(transactionId) {
+  if (!transactionId) {
+    return false;
+  }
+
+  const supabase = getSupabase();
+  const { count, error } = await supabase
+    .from('metrics_events')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_name', 'Purchase')
+    .eq('user_id', transactionId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (count || 0) > 0;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,25 +32,37 @@ export default async function handler(req, res) {
 
   try {
     const payload = req.body || {};
-    const status = payload?.status || payload?.data?.status;
-    const isPaid = status === 'paid';
+    const transaction = payload?.data || payload;
+    const status = transaction?.status || payload?.status || '';
+    const paymentMethod = transaction?.paymentMethod || payload?.paymentMethod || '';
+    const transactionId = String(transaction?.id || payload?.objectId || payload?.id || '');
+    const isPaid = status === 'paid' && (!paymentMethod || paymentMethod === 'pix');
 
     if (isPaid) {
-      const amount = (payload?.data?.amount || payload?.amount || 0) / 100;
-      const customerName = payload?.data?.customer?.name || 'Cliente';
-      const itemTitle = payload?.data?.items?.[0]?.title || 'Pedido';
+      if (await hasTrackedPurchase(transactionId)) {
+        return res.status(200).json({ ok: true, duplicate: true });
+      }
+
+      const amount = (transaction?.paidAmount || transaction?.amount || 0) / 100;
+      const customerName = transaction?.customer?.name || 'Cliente';
+      const itemTitle = transaction?.items?.[0]?.title || 'Pedido';
       const amountStr = `R$${amount.toFixed(2).replace('.', ',')}`;
       const description = `${customerName} • ${amountStr} • ${itemTitle}`;
       const config = normalizeTrackingConfig(await getSetting('tracking_config', DEFAULT_TRACKING_CONFIG));
 
       await trackMetricEvent({
-        sessionId: payload?.data?.id || payload?.id || null,
+        sessionId: transactionId || null,
         eventName: 'Purchase',
         metadata: {
+          transactionId,
+          status,
+          paymentMethod,
           amount,
           customerName,
           itemTitle,
           description,
+          receiptUrl: transaction?.pix?.receiptUrl || null,
+          end2EndId: transaction?.pix?.end2EndId || null,
           payload
         }
       });

@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cep: cepInput.value,
         rua: ruaInput.value,
         numero: numInput.value,
+        complemento: document.getElementById('inp-comp')?.value.trim() || '',
         bairro: bairroInput.value,
         cidade: cidadeInput.value,
         uf: ufInput.value.toUpperCase(),

@@ -1,5 +1,29 @@
 import { DEFAULT_API_KEYS, getSetting, normalizeApiKeys } from '../_lib/settings.js';
 
+function normalizeString(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function normalizeDigits(value) {
+  return normalizeString(value).replace(/\D/g, '');
+}
+
+function getRequestIp(req) {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const forwardedIp = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+
+  if (typeof forwardedIp === 'string' && forwardedIp.trim()) {
+    return forwardedIp.split(',')[0].trim();
+  }
+
+  return normalizeString(req.headers['x-real-ip'] || req.socket?.remoteAddress || '');
+}
+
+function buildExternalRef() {
+  const randomSuffix = Math.random().toString(36).slice(2, 8);
+  return `aquagas-${Date.now()}-${randomSuffix}`;
+}
+
 function getNestedValue(source, path) {
   return path.split('.').reduce((value, key) => {
     if (value && typeof value === 'object' && key in value) {
@@ -130,45 +154,104 @@ export default async function handler(req, res) {
     }
 
     const { amount, items, customer, shipping } = req.body || {};
+    const customerPhone = normalizeDigits(customer?.phone);
+    const customerCpf = normalizeDigits(customer?.cpf);
+    const normalizedItems = Array.isArray(items) && items.length
+      ? items.map((item, index) => ({
+          title: normalizeString(item?.title) || `Pedido AquaGas ${index + 1}`,
+          unitPrice: Math.round(Number(item?.unitPrice || 0)),
+          quantity: Math.max(1, Math.round(Number(item?.quantity || 1))),
+          tangible: item?.tangible !== false,
+          externalRef: normalizeString(item?.externalRef) || `item-${index + 1}`
+        }))
+      : [{
+          title: 'Pedido AquaGas',
+          unitPrice: Math.round(amount),
+          quantity: 1,
+          tangible: true,
+          externalRef: 'item-1'
+        }];
+    const requiresShipping = normalizedItems.some((item) => item.tangible);
+    const shippingAddress = shipping ? {
+      street: normalizeString(shipping.rua || shipping.street),
+      streetNumber: normalizeString(shipping.numero || shipping.streetNumber),
+      neighborhood: normalizeString(shipping.bairro || shipping.neighborhood),
+      city: normalizeString(shipping.cidade || shipping.city),
+      state: normalizeString(shipping.uf || shipping.state).toUpperCase(),
+      zipCode: normalizeDigits(shipping.cep || shipping.zipCode || shipping.zipcode),
+      country: normalizeString(shipping.country || 'BR').toUpperCase(),
+      complement: normalizeString(shipping.complemento || shipping.complement)
+    } : null;
+    const externalRef = buildExternalRef();
+    const ip = getRequestIp(req);
 
-    if (!amount || !customer?.name || !customer?.email || !customer?.cpf) {
+    if (!amount || !customer?.name || !customer?.email || !customerCpf || !customerPhone) {
       return res.status(400).json({
-        error: 'amount, customer.name, customer.email and customer.cpf are required'
+        error: 'amount, customer.name, customer.email, customer.cpf and customer.phone are required'
       });
+    }
+
+    if (requiresShipping) {
+      const hasValidShipping = shippingAddress
+        && shippingAddress.street
+        && shippingAddress.streetNumber
+        && shippingAddress.neighborhood
+        && shippingAddress.city
+        && shippingAddress.state.length === 2
+        && shippingAddress.zipCode.length === 8
+        && shippingAddress.country.length === 2;
+
+      if (!hasValidShipping) {
+        return res.status(400).json({
+          error: 'shipping.address.street, streetNumber, neighborhood, city, state, zipCode and country are required for tangible items'
+        });
+      }
     }
 
     const auth = Buffer.from(`${keys.publicKey}:${keys.secretKey}`).toString('base64');
     const host = req.headers.host;
     const protocol = req.headers['x-forwarded-proto'] || (host?.includes('localhost') ? 'http' : 'https');
     const postbackUrl = `${protocol}://${host}/api/pix/webhook`;
+    const metadata = JSON.stringify({
+      source: 'aquagas-checkout',
+      externalRef,
+      itemCount: normalizedItems.length,
+      zipCode: shippingAddress?.zipCode || null
+    });
 
     const body = {
       amount: Math.round(amount),
+      currency: 'BRL',
       paymentMethod: 'pix',
       postbackUrl,
-      items: items || [{
-        title: 'Pedido AquaGas',
-        unitPrice: Math.round(amount),
-        quantity: 1,
-        tangible: true
-      }],
-      customer: {
-        name: customer.name,
-        email: customer.email,
-        phoneNumber: customer.phone?.replace(/\D/g, '') || '',
-        document: {
-          number: customer.cpf?.replace(/\D/g, '') || '',
-          type: 'cpf'
-        }
+      externalRef,
+      metadata,
+      ip,
+      pix: {
+        expiresInDays: 1
       },
-      shipping: shipping ? {
+      items: normalizedItems,
+      customer: {
+        name: normalizeString(customer.name),
+        email: normalizeString(customer.email),
+        phone: customerPhone,
+        document: {
+          number: customerCpf,
+          type: 'cpf'
+        },
+        address: shippingAddress || undefined
+      },
+      shipping: requiresShipping ? {
+        fee: 0,
         address: {
-          street: shipping.rua || '',
-          streetNumber: shipping.numero || '',
-          neighborhood: shipping.bairro || '',
-          city: shipping.cidade || '',
-          state: shipping.uf || '',
-          zipcode: shipping.cep?.replace(/\D/g, '') || ''
+          street: shippingAddress.street,
+          streetNumber: shippingAddress.streetNumber,
+          neighborhood: shippingAddress.neighborhood,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          zipCode: shippingAddress.zipCode,
+          country: shippingAddress.country,
+          complement: shippingAddress.complement || undefined
         }
       } : undefined
     };
@@ -182,6 +265,7 @@ export default async function handler(req, res) {
       response = await fetch('https://api.titanshub.io/v1/transactions', {
         method: 'POST',
         headers: {
+          accept: 'application/json',
           'Content-Type': 'application/json',
           Authorization: `Basic ${auth}`
         },
