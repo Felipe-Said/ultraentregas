@@ -410,4 +410,32 @@ document.addEventListener('DOMContentLoaded', () => {
       // Silently fail — user can input manually
     }
   })();
+
+  // ─── 7. FAQ Accordion Logic ───
+  const faqItems = document.querySelectorAll('.faq-item');
+  faqItems.forEach(item => {
+    const trigger = item.querySelector('.faq-trigger');
+    const content = item.querySelector('.faq-content');
+    const icon = trigger.querySelector('svg');
+
+    trigger.addEventListener('click', () => {
+      const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+      
+      // Close all others
+      faqItems.forEach(otherItem => {
+         const otherContent = otherItem.querySelector('.faq-content');
+         const otherIcon = otherItem.querySelector('.faq-trigger svg');
+         if (otherContent) otherContent.style.maxHeight = '0px';
+         if (otherIcon) otherIcon.classList.remove('rotate-180');
+      });
+
+      if (!isOpen) {
+        content.style.maxHeight = content.scrollHeight + 'px';
+        icon.classList.add('rotate-180');
+      } else {
+        content.style.maxHeight = '0px';
+        icon.classList.remove('rotate-180');
+      }
+    });
+  });
 });
