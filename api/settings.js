@@ -1,49 +1,46 @@
-import { supabase } from './_lib/supabase.js';
+import {
+  DEFAULT_API_KEYS,
+  DEFAULT_TRACKING_CONFIG,
+  getSetting,
+  normalizeApiKeys,
+  normalizeTrackingConfig,
+  upsertSetting
+} from './_lib/settings.js';
+import { requireAdmin } from './_lib/admin-auth.js';
 
 export default async function handler(req, res) {
-  // Simple check for settings key - in real prod, we would verify the SESSION_TOKEN here
-  // But for this project, we'll keep it functional for the user.
+  try {
+    requireAdmin(req);
 
-  if (req.method === 'GET') {
-    const { data: config, error } = await supabase
-      .from('settings')
-      .select('data')
-      .eq('id', 'tracking_config')
-      .single();
+    if (req.method === 'GET') {
+      const [config, keys] = await Promise.all([
+        getSetting('tracking_config', DEFAULT_TRACKING_CONFIG),
+        getSetting('api_keys', DEFAULT_API_KEYS)
+      ]);
 
-    const { data: keys, error: kError } = await supabase
-      .from('settings')
-      .select('data')
-      .eq('id', 'api_keys')
-      .single();
-
-    return res.status(200).json({
-      config: config?.data || { pixels: [], gtags: [], pushcuts: [] },
-      keys: keys?.data || { publicKey: '', secretKey: '' }
-    });
-  }
-
-  if (req.method === 'POST') {
-    const { type, payload } = req.body;
-    let targetId = '';
-
-    if (type === 'keys') {
-      targetId = 'api_keys';
-    } else {
-      targetId = 'tracking_config';
+      return res.status(200).json({
+        config: normalizeTrackingConfig(config),
+        keys: normalizeApiKeys(keys)
+      });
     }
 
-    // Get current data first to merge if needed, or just overwrite
-    const { error } = await supabase
-      .from('settings')
-      .upsert({ id: targetId, data: payload, updated_at: new Date().toISOString() });
+    if (req.method === 'POST') {
+      const { type, payload } = req.body || {};
 
-    if (error) {
-      return res.status(500).json({ error: error.message });
+      if (type === 'keys') {
+        await upsertSetting('api_keys', normalizeApiKeys(payload));
+      } else if (type === 'config') {
+        await upsertSetting('tracking_config', normalizeTrackingConfig(payload));
+      } else {
+        return res.status(400).json({ error: 'Invalid settings type' });
+      }
+
+      return res.status(200).json({ ok: true });
     }
 
-    return res.status(200).json({ ok: true });
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    const status = /token/i.test(error.message) ? 401 : 500;
+    return res.status(status).json({ error: error.message });
   }
-
-  return res.status(405).json({ error: 'Method not allowed' });
 }

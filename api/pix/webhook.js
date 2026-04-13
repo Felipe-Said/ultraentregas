@@ -1,82 +1,87 @@
-import { supabase } from '../_lib/supabase.js';
+import { trackMetricEvent } from '../_lib/metrics.js';
+import {
+  DEFAULT_TRACKING_CONFIG,
+  getSetting,
+  normalizeTrackingConfig
+} from '../_lib/settings.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const payload = req.body;
-  const status = payload?.status || payload?.data?.status;
-  const isPaid = status === 'paid';
+  try {
+    const payload = req.body || {};
+    const status = payload?.status || payload?.data?.status;
+    const isPaid = status === 'paid';
 
-  if (isPaid) {
-    const amount = (payload?.data?.amount || payload?.amount || 0) / 100;
-    const customerName = payload?.data?.customer?.name || 'Cliente';
-    const itemTitle = payload?.data?.items?.[0]?.title || 'Pedido';
-    const amountStr = `R$${amount.toFixed(2).replace('.', ',')}`;
+    if (isPaid) {
+      const amount = (payload?.data?.amount || payload?.amount || 0) / 100;
+      const customerName = payload?.data?.customer?.name || 'Cliente';
+      const itemTitle = payload?.data?.items?.[0]?.title || 'Pedido';
+      const amountStr = `R$${amount.toFixed(2).replace('.', ',')}`;
+      const description = `${customerName} • ${amountStr} • ${itemTitle}`;
+      const config = normalizeTrackingConfig(await getSetting('tracking_config', DEFAULT_TRACKING_CONFIG));
 
-    console.log(`[PAYMENT RECEIVED] ${customerName} — ${amountStr}`);
+      await trackMetricEvent({
+        sessionId: payload?.data?.id || payload?.id || null,
+        eventName: 'Purchase',
+        metadata: {
+          amount,
+          customerName,
+          itemTitle,
+          description,
+          payload
+        }
+      });
 
-    // 1. Fetch config from Supabase
-    const { data: configRecord } = await supabase
-      .from('settings')
-      .select('data')
-      .eq('id', 'tracking_config')
-      .single();
-
-    const config = configRecord?.data || { pixels: [], gtags: [], pushcuts: [] };
-
-    // 2. Log metric to Supabase
-    await supabase.from('metrics_events').insert({
-      event_name: 'Purchase',
-      event_desc: `${customerName} — ${amountStr} — ${itemTitle}`,
-      metadata: { amount, customerName, itemTitle, payload }
-    });
-
-    // 3. Process Pushcut notifications
-    for (const pc of config.pushcuts || []) {
-      if (!pc.url) continue;
-      try {
-        await fetch(pc.url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: 'Venda Paga!',
-            text: `${customerName} — ${amountStr} — ${itemTitle}`
-          })
-        });
-      } catch (err) { console.error('[Pushcut Error]', err.message); }
-    }
-
-    // 4. Process Facebook Pixels (CAPI)
-    for (const px of config.pixels || []) {
-      if (!px.id || !px.token) continue;
-      try {
-        const eventData = {
-          data: [{
-            event_name: 'Purchase',
-            event_time: Math.floor(Date.now() / 1000),
-            action_source: 'website',
-            custom_data: {
-              value: amount,
-              currency: 'BRL',
-              content_type: 'product',
-              content_name: itemTitle
-            }
-          }]
-        };
-
-        await fetch(
-          `https://graph.facebook.com/v18.0/${px.id}/events?access_token=${px.token}`,
-          {
+      for (const pushcut of config.pushcuts) {
+        try {
+          await fetch(pushcut.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(eventData)
-          }
-        );
-      } catch (err) { console.error(`[Pixel Error] ID ${px.id}:`, err.message); }
-    }
-  }
+            body: JSON.stringify({
+              title: 'Venda Paga!',
+              text: description
+            })
+          });
+        } catch (error) {
+          console.error('[Pushcut Error]', error.message);
+        }
+      }
 
-  return res.status(200).json({ ok: true });
+      for (const pixel of config.pixels) {
+        try {
+          const eventData = {
+            data: [{
+              event_name: 'Purchase',
+              event_time: Math.floor(Date.now() / 1000),
+              action_source: 'website',
+              custom_data: {
+                value: amount,
+                currency: 'BRL',
+                content_type: 'product',
+                content_name: itemTitle
+              }
+            }]
+          };
+
+          await fetch(
+            `https://graph.facebook.com/v18.0/${pixel.id}/events?access_token=${pixel.token}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(eventData)
+            }
+          );
+        } catch (error) {
+          console.error(`[Pixel Error] ID ${pixel.id}:`, error.message);
+        }
+      }
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 }

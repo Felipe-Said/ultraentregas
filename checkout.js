@@ -14,23 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── Countdown Timer ───
   const countdownEl = document.getElementById('countdown');
-  let totalSec = 9 * 60 + 55;
-  setInterval(() => {
-    if (totalSec <= 0) return;
-    totalSec--;
-    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
-    const s = (totalSec % 60).toString().padStart(2, '0');
-    countdownEl.textContent = `${m}:${s}`;
-  }, 1000);
+  if (countdownEl) {
+    countdownEl.textContent = 'PIX gerado apos a confirmacao';
+  }
 
   // ─── People count ───
   const peopleEl = document.getElementById('people-count');
-  const base = 14 + Math.floor(Math.random() * 12);
-  peopleEl.textContent = `${base} pessoas`;
-  setInterval(() => {
-    const n = base + Math.floor(Math.random() * 6) - 2;
-    peopleEl.textContent = `${Math.max(8, n)} pessoas`;
-  }, 8000);
+  if (peopleEl) {
+    peopleEl.textContent = 'Atendimento online';
+  }
 
   // ─── Stepper ───
   function goStep(step) {

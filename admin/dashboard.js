@@ -5,6 +5,26 @@ let fbPixels = [];
 let gtags = [];
 let pushcuts = [];
 
+function getAuthHeaders() {
+  const token = localStorage.getItem('aquagas_admin_token');
+  return token
+    ? {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    : { 'Content-Type': 'application/json' };
+}
+
+function handleUnauthorized(errorMessage) {
+  if (/token/i.test(errorMessage || '')) {
+    localStorage.removeItem('aquagas_admin_token');
+    localStorage.removeItem('aquagas_admin_user');
+    window.location.href = 'login.html';
+    return true;
+  }
+  return false;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboardData();
   initApiKeys();
@@ -18,24 +38,32 @@ document.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════
 async function loadDashboardData() {
   try {
-    const res = await fetch(`${API_URL}/metrics`);
-    if (!res.ok) throw new Error('API offline');
+    const res = await fetch(`${API_URL}/metrics`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      throw new Error(payload.error || 'API offline');
+    }
     const data = await res.json();
     renderDashboard(data);
   } catch (err) {
     console.error("[Admin] Erro ao carregar métricas:", err.message);
-    renderDashboard({ views: 0, whatsappClicks: 0, cepFills: 0, totalSales: 0, logs: [] });
+    if (handleUnauthorized(err.message)) return;
+    renderDashboard({ error: err.message, logs: [] });
   }
 }
 
 function renderDashboard(data) {
-  document.getElementById('metric-views').innerText = data.views || 0;
-  document.getElementById('metric-leads').innerText = data.whatsappClicks || 0;
-  document.getElementById('metric-cep').innerText = data.cepFills || 0;
-  document.getElementById('metric-sales').innerText = data.totalSales || 0;
+  document.getElementById('metric-views').innerText = data.views ?? '--';
+  document.getElementById('metric-leads').innerText = data.whatsappClicks ?? '--';
+  document.getElementById('metric-cep').innerText = data.cepFills ?? '--';
+  document.getElementById('metric-sales').innerText = data.totalSales ?? '--';
 
   const tbody = document.getElementById('logs-table');
-  if (data.logs?.length > 0) {
+  if (data.error) {
+    tbody.innerHTML = `<tr><td colspan="4" style="padding: 2rem; text-align: center; color: #ef4444; font-size: 0.75rem;">Falha ao carregar metricas reais: ${data.error}</td></tr>`;
+  } else if (data.logs?.length > 0) {
     tbody.innerHTML = data.logs.map(log => `
       <tr style="border-bottom: 1px solid hsl(220 15% 95%); transition: background 0.15s;" onmouseenter="this.style.background='hsl(220 15% 98%)'" onmouseleave="this.style.background='transparent'">
         <td style="padding: 0.75rem 1rem; font-weight: 500;">${log.time}</td>
@@ -49,7 +77,7 @@ function renderDashboard(data) {
       </tr>
     `).join('');
   } else {
-    tbody.innerHTML = '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: hsl(220 10% 60%); font-size: 0.75rem;">Nenhuma atividade recente</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: hsl(220 10% 60%); font-size: 0.75rem;">Nenhuma atividade real registrada ainda</td></tr>';
   }
 }
 
@@ -72,23 +100,35 @@ async function initApiKeys() {
   const feedback = document.getElementById('api-save-feedback');
 
   try {
-    const res = await fetch(`${API_URL}/settings`);
+    const res = await fetch(`${API_URL}/settings`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      throw new Error(payload.error || 'Erro ao buscar chaves');
+    }
     const data = await res.json();
     if (data.keys) {
       publicInput.value = data.keys.publicKey || '';
       secretInput.value = data.keys.secretKey || '';
     }
-  } catch (err) { console.warn('[Admin] Erro ao buscar chaves:', err); }
+  } catch (err) {
+    if (handleUnauthorized(err.message)) return;
+    console.warn('[Admin] Erro ao buscar chaves:', err);
+  }
 
   saveBtn.addEventListener('click', async () => {
     const payload = { publicKey: publicInput.value.trim(), secretKey: secretInput.value.trim() };
     try {
       await fetch(`${API_URL}/settings`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: getAuthHeaders(),
         body: JSON.stringify({ type: 'keys', payload })
       });
       showFeedback(feedback, 'Chaves salvas!', false);
-    } catch { showFeedback(feedback, 'Erro ao salvar', true); }
+    } catch (err) {
+      if (handleUnauthorized(err.message)) return;
+      showFeedback(feedback, 'Erro ao salvar', true);
+    }
   });
 }
 
@@ -104,23 +144,35 @@ async function initPixel() {
 
 async function loadSettings() {
   try {
-    const res = await fetch(`${API_URL}/settings`);
+    const res = await fetch(`${API_URL}/settings`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      const payload = await res.json().catch(() => ({}));
+      throw new Error(payload.error || 'Erro ao carregar configurações');
+    }
     const data = await res.json();
     fbPixels = data.config.pixels || [];
     gtags = data.config.gtags || [];
     pushcuts = data.config.pushcuts || [];
-  } catch (err) { console.warn('[Admin] Erro ao carregar configurações:', err); }
+  } catch (err) {
+    if (handleUnauthorized(err.message)) return;
+    console.warn('[Admin] Erro ao carregar configurações:', err);
+  }
 }
 
 async function saveSettings(feedbackEl) {
   const payload = { pixels: fbPixels, gtags, pushcuts };
   try {
     await fetch(`${API_URL}/settings`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ type: 'config', payload })
     });
     showFeedback(feedbackEl, 'Configurações salvas!', false);
-  } catch { showFeedback(feedbackEl, 'Erro ao salvar', true); }
+  } catch (err) {
+    if (handleUnauthorized(err.message)) return;
+    showFeedback(feedbackEl, 'Erro ao salvar', true);
+  }
 }
 
 // FB PIXELS

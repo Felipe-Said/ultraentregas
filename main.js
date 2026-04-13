@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cartCepInput) cartCepInput.value = formatted;
   }
 
-  function validateCep(cepValue) {
+  function validateCep(cepValue, source = 'manual') {
     cepValidated = true;
     if (cartEntregaEl) {
       cartEntregaEl.textContent = 'Grátis';
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     renderCart();
     window.dispatchEvent(new CustomEvent('track-event', {
-      detail: { event: 'CEP_Filled', cep: cepValue, source: 'geolocation' }
+      detail: { event: 'CEP_Filled', cep: cepValue, source }
     }));
   }
 
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const cep = await fetchCepFromLocation();
       fillAllCepInputs(cep);
-      validateCep(cep);
+      validateCep(cep, 'geolocation');
       btn.innerHTML = `<svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg> CEP encontrado!`;
       btn.classList.add('text-success');
     } catch (err) {
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const val = heroCepInput?.value?.replace(/\D/g, '') || '';
       if (val.length >= 8) {
         fillAllCepInputs(val);
-        validateCep(val);
+        validateCep(val, 'manual');
         alert('CEP Validado! Região com entrega grátis.');
       } else {
         alert('Por favor, insira um CEP válido.');
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const val = cartCepInput?.value?.replace(/\D/g, '') || '';
     if (val.length >= 8) {
       fillAllCepInputs(val);
-      validateCep(val);
+      validateCep(val, 'manual');
     }
   });
 
@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const cep = await fetchCepFromLocation();
       fillAllCepInputs(cep);
-      validateCep(cep);
+      validateCep(cep, 'geolocation');
 
       // Update the geo buttons to show success
       document.querySelectorAll('[data-geo-btn]').forEach(btn => {
