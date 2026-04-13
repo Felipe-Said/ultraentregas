@@ -131,6 +131,8 @@ export async function upsertSetting(id, data) {
     if (error) {
       throw error;
     }
+
+    await writeLocalSetting(id, data).catch(() => false);
   } catch (error) {
     const wroteLocal = await writeLocalSetting(id, data).catch(() => false);
 

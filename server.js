@@ -3,6 +3,7 @@ import express from 'express';
 
 import loginHandler from './api/login.js';
 import metricsHandler from './api/metrics.js';
+import pushcutTestHandler from './api/pushcut/test.js';
 import settingsHandler from './api/settings.js';
 import trackHandler from './api/track.js';
 import trackingConfigHandler from './api/tracking-config.js';
@@ -31,6 +32,7 @@ function adapt(handler) {
 
 app.all('/api/login', adapt(loginHandler));
 app.all('/api/metrics', adapt(metricsHandler));
+app.all('/api/pushcut/test', adapt(pushcutTestHandler));
 app.all('/api/settings', adapt(settingsHandler));
 app.all('/api/track', adapt(trackHandler));
 app.all('/api/tracking-config', adapt(trackingConfigHandler));
@@ -40,5 +42,5 @@ app.all('/api/pix/webhook', adapt(pixWebhookHandler));
 
 app.listen(PORT, () => {
   console.log(`AquaGas API server running on http://localhost:${PORT}`);
-  console.log('Routes: /api/login, /api/metrics, /api/settings, /api/track, /api/tracking-config, /api/pix/create, /api/pix/status, /api/pix/webhook');
+  console.log('Routes: /api/login, /api/metrics, /api/pushcut/test, /api/settings, /api/track, /api/tracking-config, /api/pix/create, /api/pix/status, /api/pix/webhook');
 });

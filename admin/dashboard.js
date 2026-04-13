@@ -301,6 +301,53 @@ async function saveSettings(feedbackEl) {
   }
 }
 
+async function sendPushcutTest(index, button) {
+  const pushcut = pushcuts[index];
+  const feedbackEl = document.getElementById('pushcut-save-feedback');
+  const url = typeof pushcut?.url === 'string' ? pushcut.url.trim() : '';
+
+  if (!url) {
+    showFeedback(feedbackEl, 'Informe a URL antes de testar', true);
+    return;
+  }
+
+  const originalHtml = button?.innerHTML || '';
+
+  try {
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Testando';
+      lucide.createIcons();
+    }
+
+    const res = await fetch(`${API_URL}/pushcut/test`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ url })
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Erro ao enviar teste');
+    }
+
+    showFeedback(feedbackEl, data.message || 'Teste enviado com sucesso!', false);
+  } catch (err) {
+    if (handleUnauthorized(err.message)) {
+      return;
+    }
+
+    showFeedback(feedbackEl, err.message || 'Erro ao testar webhook', true);
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = originalHtml;
+      lucide.createIcons();
+    }
+  }
+}
+
 window.addPixelRow = () => {
   fbPixels.push({ id: '', token: '' });
   renderPixelList();
@@ -320,8 +367,8 @@ function renderPixelList() {
     listContainer.innerHTML = fbPixels.map((pixel, index) => `
       <div class="pixel-row admin-card" style="padding: 1.25rem;">
         <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
-          <div><label class="admin-label">Pixel ID</label><input type="text" onchange="fbPixels[${index}].id=this.value" class="admin-input mono" value="${pixel.id}" /></div>
-          <div><label class="admin-label">Token (CAPI)</label><input type="password" onchange="fbPixels[${index}].token=this.value" class="admin-input mono" value="${pixel.token}" /></div>
+          <div><label class="admin-label">Pixel ID</label><input type="text" oninput="fbPixels[${index}].id=this.value" class="admin-input mono" value="${pixel.id}" /></div>
+          <div><label class="admin-label">Token (CAPI)</label><input type="password" oninput="fbPixels[${index}].token=this.value" class="admin-input mono" value="${pixel.token}" /></div>
           <button onclick="removePixelRow(${index})" class="admin-btn admin-btn-outline" style="color: #ef4444;"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
         </div>
       </div>
@@ -354,8 +401,8 @@ function renderGtagList() {
     listContainer.innerHTML = gtags.map((gtag, index) => `
       <div class="gtag-row admin-card" style="padding: 1.25rem; border-color: rgba(66,133,244,.15);">
         <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.75rem; align-items: flex-end;">
-          <div><label class="admin-label">Google Tag ID</label><input type="text" onchange="gtags[${index}].id=this.value" class="admin-input mono" value="${gtag.id}" /></div>
-          <div><label class="admin-label">Label</label><input type="text" onchange="gtags[${index}].label=this.value" class="admin-input mono" value="${gtag.label}" /></div>
+          <div><label class="admin-label">Google Tag ID</label><input type="text" oninput="gtags[${index}].id=this.value" class="admin-input mono" value="${gtag.id}" /></div>
+          <div><label class="admin-label">Label</label><input type="text" oninput="gtags[${index}].label=this.value" class="admin-input mono" value="${gtag.label}" /></div>
           <button onclick="removeGtagRow(${index})" class="admin-btn admin-btn-outline" style="color: #ef4444;"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
         </div>
       </div>
@@ -388,8 +435,13 @@ function renderPushcutList() {
     listContainer.innerHTML = pushcuts.map((pushcut, index) => `
       <div class="pushcut-row admin-card" style="padding: 1.25rem;">
         <div style="display: flex; gap: 0.75rem; align-items: center;">
-          <div style="flex: 1;"><label class="admin-label">Webhook URL</label><input type="url" onchange="pushcuts[${index}].url=this.value" class="admin-input mono" value="${pushcut.url}" /></div>
+          <div style="flex: 1;"><label class="admin-label">Webhook URL</label><input type="url" oninput="pushcuts[${index}].url=this.value" class="admin-input mono" value="${pushcut.url}" /></div>
           <button onclick="removePushcutRow(${index})" class="admin-btn admin-btn-outline" style="color: #ef4444; margin-top: 1.2rem;"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 0.75rem;">
+          <button onclick="testPushcutRow(${index}, this)" class="admin-btn admin-btn-outline" style="padding: 0.625rem 0.9rem;">
+            <i data-lucide="send" class="w-4 h-4"></i> Enviar teste
+          </button>
         </div>
       </div>
     `).join('');
@@ -401,6 +453,10 @@ function renderPushcutList() {
 document.getElementById('btn-save-pushcuts')?.addEventListener('click', () => {
   saveSettings(document.getElementById('pushcut-save-feedback'));
 });
+
+window.testPushcutRow = (index, button) => {
+  sendPushcutTest(index, button);
+};
 
 function showFeedback(element, text, isError) {
   const icon = isError
