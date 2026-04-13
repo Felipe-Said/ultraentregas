@@ -70,6 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'R$' + num.toFixed(2).replace('.', ',');
   }
 
+  function renderIcons() {
+    window.lucide?.createIcons?.();
+  }
+
   function getNestedValue(source, path) {
     return path.split('.').reduce((value, key) => {
       if (value && typeof value === 'object' && key in value) {
@@ -260,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.uf) ufInput.value = data.uf;
         btnCep.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
         btnCep.style.background = 'hsl(var(--success))';
-        lucide.createIcons();
+        renderIcons();
         numInput?.focus();
       } else {
         btnCep.textContent = 'Buscar';
@@ -327,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show loading
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<span class="flex items-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Gerando Pix...</span>';
-    lucide.createIcons();
+    renderIcons();
 
     const orderPayload = {
       amount: amountCents,
@@ -402,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('[PIX Error]', err);
       confirmBtn.disabled = false;
       confirmBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-2"></i> Confirmar Pedido';
-      lucide.createIcons();
+      renderIcons();
 
       // Show error inline
       const container = confirmBtn.parentElement;
@@ -503,13 +507,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <i data-lucide="check" class="w-4 h-4"></i>
           Código copiado!
         `;
-        lucide.createIcons();
+        renderIcons();
         setTimeout(() => {
           btn.innerHTML = `
             <i data-lucide="copy" class="w-4 h-4"></i>
             Copiar código Pix
           `;
-          lucide.createIcons();
+          renderIcons();
         }, 3000);
       });
     });
@@ -532,5 +536,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial validation
   validateStep1();
   validateStep2();
-  lucide.createIcons();
+  renderIcons();
 });
