@@ -22,8 +22,3 @@
     "express": "^5.2.1"
   }
 }
-
-- [x] List Supabase organizations <!-- id: 0 -->
-- [x] Create Supabase project `ultraentregas` <!-- id: 1 -->
-- [/] Create `settings` table in Supabase <!-- id: 2 -->
-- [/] Create `metrics` table in Supabase <!-- id: 3 -->
