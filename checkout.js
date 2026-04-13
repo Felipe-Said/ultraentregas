@@ -514,16 +514,16 @@ document.addEventListener('DOMContentLoaded', () => {
                   </div>
 
                   <div class="rounded-[1.6rem] border border-primary-foreground/12 bg-primary-foreground/9 p-5">
-                    <div class="flex items-start justify-between gap-4">
-                      <div>
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div class="min-w-0">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Tempo para pagar</p>
-                        <p id="pix-timer" class="mt-3 font-display text-3xl font-extrabold leading-none text-[#ff6259]">15:00</p>
+                        <p id="pix-timer" class="mt-3 font-display text-[2.25rem] font-extrabold leading-none tracking-tight text-primary-foreground sm:text-4xl">15:00</p>
                       </div>
-                      <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff6259]/12 text-[#ff6259]">
+                      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/10 text-primary-foreground/76">
                         <i data-lucide="clock-3" class="h-5 w-5"></i>
                       </div>
                     </div>
-                    <p class="mt-4 text-sm text-primary-foreground/72">Valido ate ${expirationLabel}</p>
+                    <p class="mt-2 text-sm text-primary-foreground/72">Valido ate ${expirationLabel}</p>
                   </div>
                 </div>
 
@@ -542,15 +542,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="rounded-[1.6rem] border border-primary-foreground/10 bg-primary-foreground/8 px-4 py-4">
-                  <div class="flex items-center gap-3">
-                    <div class="flex -space-x-2">
-                      <img alt="Fabio R." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/fabioreview-ft%20perfil.jpg" />
-                      <img alt="Carla M." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/carlareview-ft%20perfil.jpg" />
-                      <img alt="Maria S." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/mariareview-ft%20perfil.jpg" />
+                  <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div class="flex items-center gap-3 shrink-0">
+                      <div class="flex -space-x-2">
+                        <img alt="Fabio R." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/fabioreview-ft%20perfil.jpg" />
+                        <img alt="Carla M." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/carlareview-ft%20perfil.jpg" />
+                        <img alt="Maria S." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/mariareview-ft%20perfil.jpg" />
+                      </div>
+                      <div class="inline-flex items-center rounded-full bg-primary-foreground/10 px-3 py-1 text-[11px] font-semibold text-primary-foreground/76">
+                        Suporte ativo
+                      </div>
                     </div>
-                    <div class="space-y-1">
+                    <div class="min-w-0 flex-1">
                       <p class="text-lg font-bold leading-tight text-primary-foreground">Atendimento online acompanhando seu pedido</p>
-                      <p class="text-sm leading-6 text-primary-foreground/72">Confirmacao manual e suporte rapido apos o pagamento.</p>
+                      <p class="mt-2 text-sm leading-7 text-primary-foreground/72">Confirmacao manual e suporte rapido apos o pagamento.</p>
                     </div>
                   </div>
                 </div>
