@@ -2,8 +2,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   // ─── Load cart from localStorage ───
-  const cart = JSON.parse(localStorage.getItem('ligeirinho_cart') || '[]');
-  const cep = localStorage.getItem('ligeirinho_cep') || '';
+  const cart = JSON.parse(localStorage.getItem('aquagas_cart') || '[]');
+  const cep = localStorage.getItem('aquagas_cep') || '';
   let currentStep = 1;
 
   // If no items, redirect back
@@ -271,8 +271,8 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('[PIX Generated]', { code: pixCode.substring(0, 40) + '...', expiration: pixExpiration });
 
       // Clear cart
-      localStorage.removeItem('ligeirinho_cart');
-      localStorage.removeItem('ligeirinho_cep');
+      localStorage.removeItem('aquagas_cart');
+      localStorage.removeItem('aquagas_cep');
 
       // Show PIX payment screen
       showPixScreen(pixCode, pixExpiration, subtotal);

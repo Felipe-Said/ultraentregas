@@ -16,7 +16,7 @@ const ADMIN_USER = {
   email: 'saidlabsglobal@gmail.com',
   password: '530348Home10'
 };
-const SESSION_TOKEN = 'ligeirinho_admin_secret_token_2026';
+const SESSION_TOKEN = 'aquagas_admin_secret_token_2026';
 
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
@@ -84,7 +84,7 @@ app.post('/api/pix/create', async (req, res) => {
     amount: Math.round(amount), // centavos
     paymentMethod: 'pix',
     postbackUrl: req.body.postbackUrl || `http://localhost:${PORT}/api/pix/webhook`,
-    items: items || [{ title: 'Pedido Ligeirinho', unitPrice: Math.round(amount), quantity: 1, tangible: true }],
+    items: items || [{ title: 'Pedido AquaGás', unitPrice: Math.round(amount), quantity: 1, tangible: true }],
     customer: {
       name: customer.name,
       email: customer.email,
@@ -243,7 +243,7 @@ app.post('/api/pix/webhook', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\nLigeirinho API Server running on http://localhost:${PORT}`);
+  console.log(`\nAquaGás API Server running on http://localhost:${PORT}`);
   console.log(`   POST /api/pix/create    — Create PIX charge`);
   console.log(`   POST /api/pix/webhook   — Payment webhook (Titans Hub)`);
   console.log(`   POST /api/keys          — Save API keys`);

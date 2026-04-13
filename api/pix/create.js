@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     amount: Math.round(amount),
     paymentMethod: 'pix',
     postbackUrl: postbackUrl,
-    items: items || [{ title: 'Pedido Ligeirinho', unitPrice: Math.round(amount), quantity: 1, tangible: true }],
+    items: items || [{ title: 'Pedido AquaGás', unitPrice: Math.round(amount), quantity: 1, tangible: true }],
     customer: {
       name: customer.name,
       email: customer.email,

@@ -2,7 +2,7 @@ const ADMIN_USER = {
   email: 'saidlabsglobal@gmail.com',
   password: '530348Home10'
 };
-const SESSION_TOKEN = 'ligeirinho_admin_secret_token_2026';
+const SESSION_TOKEN = 'aquagas_admin_secret_token_2026';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

@@ -201,7 +201,7 @@ function showFeedback(el, text, isError) {
   setTimeout(() => el.style.opacity = '0', 3000);
 }
 
-window.logout = () => { localStorage.removeItem('ligeirinho_admin_token'); window.location.href = 'login.html'; };
+window.logout = () => { localStorage.removeItem('aquagas_admin_token'); window.location.href = 'login.html'; };
 
 function initGtag() {} // Legacy holder
 function initPushcut() {} // Legacy holder

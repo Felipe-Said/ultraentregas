@@ -2,7 +2,7 @@ const API_URL = '/api';
 
 document.addEventListener('DOMContentLoaded', () => {
     // If already logged in, redirect to index
-    if (localStorage.getItem('ligeirinho_admin_token')) {
+    if (localStorage.getItem('aquagas_admin_token')) {
         window.location.href = 'index.html';
     }
 
@@ -40,8 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok && data.token) {
                 // Success!
-                localStorage.setItem('ligeirinho_admin_token', data.token);
-                localStorage.setItem('ligeirinho_admin_user', JSON.stringify(data.user));
+                localStorage.setItem('aquagas_admin_token', data.token);
+                localStorage.setItem('aquagas_admin_user', JSON.stringify(data.user));
                 
                 // Show success state on button
                 submitBtn.style.background = '#22c55e';

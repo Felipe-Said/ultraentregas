@@ -155,8 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Save cart and CEP to localStorage for checkout page
-    localStorage.setItem('ligeirinho_cart', JSON.stringify(cart));
-    localStorage.setItem('ligeirinho_cep', cartCepInput?.value?.replace(/\D/g, '') || '');
+    localStorage.setItem('aquagas_cart', JSON.stringify(cart));
+    localStorage.setItem('aquagas_cep', cartCepInput?.value?.replace(/\D/g, '') || '');
 
     window.dispatchEvent(new CustomEvent('track-event', {
       detail: {
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyBtn = document.querySelector('button.bg-primary\\/10');
   if (copyBtn && copyBtn.innerText.includes('Copiar')) {
     copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText('LIGEIRINHO10');
+      navigator.clipboard.writeText('AQUAGAS10');
       const originalText = copyBtn.innerText;
       copyBtn.innerText = 'Copiado!';
       setTimeout(() => {
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const geoBtn = document.createElement('button');
     geoBtn.type = 'button';
     geoBtn.setAttribute('data-geo-btn', '');
-    geoBtn.className = 'flex items-center gap-1 text-[11px] font-semibold text-primary-foreground/70 hover:text-primary-foreground mt-2 transition-colors mx-auto';
+    geoBtn.className = 'flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary-foreground mt-2 transition-colors mx-auto';
     geoBtn.innerHTML = `<svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 1.202 0C14.461 20.193 20 14.993 20 10a8 8 0 0 0-8-8z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="10" r="3"/></svg> Usar minha localização`;
     geoBtn.addEventListener('click', () => handleGeolocateClick(geoBtn));
     heroCepContainer.appendChild(geoBtn);
