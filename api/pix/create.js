@@ -6,13 +6,29 @@ export default async function handler(req, res) {
   }
 
   // 1. Fetch API keys from Supabase
-  const { data: keyRecord, error: kError } = await supabase
-    .from('settings')
-    .select('data')
-    .eq('id', 'api_keys')
-    .single();
+  let keys = {};
+  try {
+    const { data: keyRecord } = await supabase
+      .from('settings')
+      .select('data')
+      .eq('id', 'api_keys')
+      .single();
+    
+    if (keyRecord?.data?.publicKey) {
+      keys = keyRecord.data;
+    }
+  } catch (e) {
+    console.warn('[PIX] Supabase fetch failed or missing config. Falling back to local keys.');
+  }
 
-  const keys = keyRecord?.data || {};
+  // Fallback to local keys if Supabase fails or is not configured on Vercel yet
+  if (!keys.publicKey || !keys.secretKey) {
+    keys = {
+      publicKey: "pk_OCkO8rkkmTMRnY4CKq0cf7RV_Q4C37dUXvyAaLwh1IB5vRHD",
+      secretKey: "sk_VUbRlurQwg6x6rTdcC3YkYCDKiuG4wBr7XMJvfwuFvAnmh_W"
+    };
+  }
+
   if (!keys.publicKey || !keys.secretKey) {
     return res.status(400).json({ error: 'API keys not configured.' });
   }
