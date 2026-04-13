@@ -70,6 +70,120 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'R$' + num.toFixed(2).replace('.', ',');
   }
 
+  function getNestedValue(source, path) {
+    return path.split('.').reduce((value, key) => {
+      if (value && typeof value === 'object' && key in value) {
+        return value[key];
+      }
+
+      return undefined;
+    }, source);
+  }
+
+  function pickFirstString(source, paths) {
+    for (const path of paths) {
+      const value = getNestedValue(source, path);
+
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+
+    return '';
+  }
+
+  function normalizeQrCodeImage(value) {
+    if (typeof value !== 'string') {
+      return '';
+    }
+
+    const trimmed = value.trim();
+
+    if (!trimmed) {
+      return '';
+    }
+
+    if (/^https?:\/\//i.test(trimmed) || /^data:image\//i.test(trimmed)) {
+      return trimmed;
+    }
+
+    const base64 = trimmed.replace(/\s+/g, '');
+
+    if (/^[A-Za-z0-9+/=]+$/.test(base64) && base64.length > 128) {
+      return `data:image/png;base64,${base64}`;
+    }
+
+    return '';
+  }
+
+  async function readJsonSafe(response) {
+    const rawText = await response.text();
+
+    if (!rawText) {
+      return {};
+    }
+
+    try {
+      return JSON.parse(rawText);
+    } catch {
+      throw new Error('A resposta do servidor veio em formato invalido.');
+    }
+  }
+
+  function extractPixPayload(payload) {
+    return {
+      pixCode: pickFirstString(payload, [
+        'pixCode',
+        'pix.qrcode',
+        'pix.qrCode',
+        'pix.copyPaste',
+        'pix.copy_paste',
+        'pix.emv',
+        'pix.payload',
+        'data.pix.qrcode',
+        'data.pix.qrCode',
+        'data.pix.copyPaste',
+        'data.pix.copy_paste',
+        'data.pix.emv',
+        'data.pix.payload',
+        'qrcode',
+        'qrCode',
+        'copyPaste',
+        'copy_paste',
+        'emv',
+        'payload'
+      ]),
+      qrCodeImage: normalizeQrCodeImage(pickFirstString(payload, [
+        'qrCodeImage',
+        'pix.qrCodeImage',
+        'pix.qrcodeImage',
+        'pix.qrCodeBase64',
+        'pix.qrcodeBase64',
+        'pix.base64Image',
+        'pix.image',
+        'data.pix.qrCodeImage',
+        'data.pix.qrcodeImage',
+        'data.pix.qrCodeBase64',
+        'data.pix.qrcodeBase64',
+        'data.pix.base64Image',
+        'data.pix.image',
+        'image',
+        'base64Image'
+      ])),
+      expirationDate: pickFirstString(payload, [
+        'expirationDate',
+        'expiresAt',
+        'expires_at',
+        'pix.expirationDate',
+        'pix.expiresAt',
+        'pix.expires_at',
+        'data.pix.expirationDate',
+        'data.pix.expiresAt',
+        'data.pix.expires_at'
+      ])
+    };
+  }
+
   // ─── Masks ───
   const cpfInput = document.getElementById('inp-cpf');
   cpfInput?.addEventListener('input', () => {
@@ -240,24 +354,34 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const res = await fetch('/api/pix/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload)
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      let res;
 
-      const data = await res.json();
+      try {
+        res = await fetch('/api/pix/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderPayload),
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      const data = await readJsonSafe(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Erro ao gerar Pix');
       }
 
-      // Extract PIX data
-      const pixCode = data?.data?.pix?.qrcode || data?.pix?.qrcode || '';
-      const pixExpiration = data?.data?.pix?.expirationDate || data?.pix?.expirationDate || '';
+      const pixPayload = extractPixPayload(data);
+      const pixCode = pixPayload.pixCode;
+      const pixExpiration = pixPayload.expirationDate;
+      const qrCodeImage = pixPayload.qrCodeImage;
 
       if (!pixCode) {
-        throw new Error('QR Code Pix não retornado pela API');
+        throw new Error('O servidor não retornou o código Pix para pagamento.');
       }
 
       console.log('[PIX Generated]', { code: pixCode.substring(0, 40) + '...', expiration: pixExpiration });
@@ -267,9 +391,13 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('aquagas_cep');
 
       // Show PIX payment screen
-      showPixScreen(pixCode, pixExpiration, subtotal);
+      showPixScreen(pixCode, pixExpiration, subtotal, qrCodeImage);
 
     } catch (err) {
+      if (err.name === 'AbortError') {
+        err = new Error('A geração do Pix demorou demais. Tente novamente.');
+      }
+
       console.error('[PIX Error]', err);
       confirmBtn.disabled = false;
       confirmBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-2"></i> Confirmar Pedido';
@@ -293,8 +421,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function showPixScreen(pixCode, expiration, total) {
+  function showPixScreen(pixCode, expiration, total, qrCodeImage = '') {
     const container = document.querySelector('.mx-auto.max-w-lg');
+    const pixQrCodeSrc = qrCodeImage || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixCode)}`;
 
     // Calculate expiration countdown
     const expDate = expiration ? new Date(expiration) : new Date(Date.now() + 15 * 60 * 1000);
@@ -303,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div style="text-align: center; padding: 1.5rem 0;">
         <!-- PIX QR Code -->
         <div style="margin: 0 auto 1rem; display: flex; justify-content: center;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixCode)}" alt="QR Code Pix" style="border-radius: 0.5rem; border: 2px solid hsl(var(--border)); padding: 0.5rem; background: #fff;" width="200" height="200" />
+          <img src="${pixQrCodeSrc}" alt="QR Code Pix" style="border-radius: 0.5rem; border: 2px solid hsl(var(--border)); padding: 0.5rem; background: #fff;" width="200" height="200" />
         </div>
 
         <h2 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 0.25rem;">Pagamento Pix Gerado!</h2>
