@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cart = JSON.parse(localStorage.getItem('aquagas_cart') || '[]');
   const cep = localStorage.getItem('aquagas_cep') || '';
   let currentStep = 1;
+  const PIX_STATUS_POLL_INTERVAL_MS = 5000;
 
   // If no items, redirect back
   if (!cart.length) {
@@ -397,6 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const pixCode = pixPayload.pixCode;
       const pixExpiration = pixPayload.expirationDate;
       const qrCodeImage = pixPayload.qrCodeImage;
+      const transactionId = data.transactionId || pixPayload.transactionId;
 
       if (!pixCode) {
         throw new Error('O servidor não retornou o código Pix para pagamento.');
@@ -409,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.removeItem('aquagas_cep');
 
       // Show PIX payment screen
-      showPixScreen(pixCode, pixExpiration, subtotal, qrCodeImage);
+      showPixScreen(pixCode, pixExpiration, subtotal, qrCodeImage, transactionId);
 
     } catch (err) {
       if (err.name === 'AbortError') {
@@ -439,7 +441,177 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function showPixScreen(pixCode, expiration, total, qrCodeImage = '') {
+  async function fetchPixStatus(transactionId) {
+    const response = await fetch(`/api/pix/status?transactionId=${encodeURIComponent(transactionId)}`, {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+    const payload = await readJsonSafe(response);
+
+    if (!response.ok) {
+      throw new Error(payload.error || 'Nao foi possivel consultar o status do Pix');
+    }
+
+    return payload;
+  }
+
+  function formatPaidAtLabel(value) {
+    if (!value) {
+      return 'Pagamento confirmado automaticamente.';
+    }
+
+    const paidAtDate = new Date(value);
+
+    if (Number.isNaN(paidAtDate.getTime())) {
+      return 'Pagamento confirmado automaticamente.';
+    }
+
+    return `Pago em ${paidAtDate.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`;
+  }
+
+  function markPixAsPaid(statusPayload = {}) {
+    const badgeText = document.getElementById('pix-payment-badge-text');
+    const heroKicker = document.getElementById('pix-hero-kicker');
+    const heroTitle = document.getElementById('pix-hero-title');
+    const heroDescription = document.getElementById('pix-hero-description');
+    const qrStatusChip = document.getElementById('pix-qr-status-chip');
+    const timerEl = document.getElementById('pix-timer');
+    const timerCaption = document.getElementById('pix-timer-caption');
+    const paymentStateTitle = document.getElementById('pix-payment-state-title');
+    const paymentStateDescription = document.getElementById('pix-payment-state-description');
+    const orderConfirmationCopy = document.getElementById('pix-order-confirmation-copy');
+
+    if (badgeText) {
+      badgeText.textContent = 'Pagamento confirmado';
+    }
+
+    if (heroKicker) {
+      heroKicker.textContent = 'Pagamento aprovado';
+    }
+
+    if (heroTitle) {
+      heroTitle.textContent = 'Pedido confirmado com sucesso';
+    }
+
+    if (heroDescription) {
+      heroDescription.textContent = 'Recebemos o seu Pix e sua entrega ja esta entrando em preparacao.';
+    }
+
+    if (qrStatusChip) {
+      qrStatusChip.textContent = 'Entrega em preparacao';
+      qrStatusChip.className = 'inline-flex items-center justify-center rounded-full bg-success/15 px-3 py-1 text-[10px] font-bold text-success';
+    }
+
+    if (timerEl) {
+      timerEl.textContent = 'Pago';
+    }
+
+    if (timerCaption) {
+      timerCaption.textContent = formatPaidAtLabel(statusPayload.paidAt);
+    }
+
+    if (paymentStateTitle) {
+      paymentStateTitle.textContent = 'Pagamento confirmado automaticamente';
+    }
+
+    if (paymentStateDescription) {
+      paymentStateDescription.textContent = 'Seu pedido foi liberado e nossa equipe ja pode seguir para a entrega.';
+    }
+
+    if (orderConfirmationCopy) {
+      orderConfirmationCopy.textContent = 'Pagamento confirmado. Nossa equipe recebeu a baixa do Pix e iniciou a separacao.';
+    }
+  }
+
+  function startPixStatusPolling({ transactionId, total, countdownId }) {
+    const normalizedTransactionId = typeof transactionId === 'string' ? transactionId.trim() : '';
+
+    if (!normalizedTransactionId) {
+      return;
+    }
+
+    let stopped = false;
+    let requestInFlight = false;
+    let intervalId = null;
+
+    const handlePaidStatus = async (statusPayload) => {
+      if (stopped) {
+        return true;
+      }
+
+      stopped = true;
+
+      if (countdownId) {
+        clearInterval(countdownId);
+      }
+
+      markPixAsPaid(statusPayload);
+
+      try {
+        const conversionResult = await window.aquagasTracking?.firePaidConversions?.({
+          transactionId: normalizedTransactionId,
+          value: Number(total.toFixed(2)),
+          currency: 'BRL'
+        });
+
+        if (conversionResult?.fired) {
+          console.log('[Tracking] Conversoes pagas disparadas', conversionResult.targets);
+        }
+      } catch (error) {
+        console.warn('[Tracking] Falha ao disparar conversoes pagas:', error.message);
+      }
+
+      return true;
+    };
+
+    const pollStatus = async () => {
+      try {
+        const statusPayload = await fetchPixStatus(normalizedTransactionId);
+
+        if (statusPayload.paid) {
+          return handlePaidStatus(statusPayload);
+        }
+      } catch (error) {
+        console.warn('[PIX Status] Falha ao consultar pagamento:', error.message);
+      }
+
+      return false;
+    };
+
+    const runPoll = () => {
+      requestInFlight = true;
+      return pollStatus()
+        .finally(() => {
+          requestInFlight = false;
+
+          if (stopped && intervalId) {
+            clearInterval(intervalId);
+          }
+        });
+    };
+
+    runPoll();
+
+    intervalId = setInterval(() => {
+      if (stopped || requestInFlight) {
+        return;
+      }
+
+      runPoll();
+    }, PIX_STATUS_POLL_INTERVAL_MS);
+
+    window.addEventListener('pagehide', () => {
+      clearInterval(intervalId);
+    }, { once: true });
+  }
+
+  function showPixScreen(pixCode, expiration, total, qrCodeImage = '', transactionId = '') {
     const container = document.getElementById('checkout-shell');
 
     if (!container) {
@@ -473,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 backdrop-blur-sm">
               <span class="h-2 w-2 rounded-full bg-success animate-pulse-soft"></span>
-              <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-foreground/92">Pix aguardando pagamento</span>
+              <span id="pix-payment-badge-text" class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-foreground/92">Pix aguardando pagamento</span>
             </div>
             <div class="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-[11px] font-semibold text-primary-foreground/80 backdrop-blur-sm">
               <i data-lucide="shield-check" class="h-3.5 w-3.5"></i>
@@ -482,9 +654,9 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div class="mt-8 text-center">
-            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/62">Finalize no seu banco</p>
-            <h2 class="mt-3 font-display text-3xl font-extrabold leading-tight text-primary-foreground">Seu Pix ja esta pronto</h2>
-            <p class="mx-auto mt-4 max-w-md text-base leading-8 text-primary-foreground/74">
+            <p id="pix-hero-kicker" class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/62">Finalize no seu banco</p>
+            <h2 id="pix-hero-title" class="mt-3 font-display text-3xl font-extrabold leading-tight text-primary-foreground">Seu Pix ja esta pronto</h2>
+            <p id="pix-hero-description" class="mx-auto mt-4 max-w-md text-base leading-8 text-primary-foreground/74">
               Escaneie o QR Code ou copie a chave abaixo para concluir o pagamento e liberar a entrega.
             </p>
           </div>
@@ -495,7 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="rounded-[1.7rem] bg-white/96 p-4 shadow-hero-card">
                   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/75">QR Code Pix</span>
-                    <span class="inline-flex items-center justify-center rounded-full bg-success/10 px-3 py-1 text-[10px] font-bold text-success">Entrega liberada apos pagar</span>
+                    <span id="pix-qr-status-chip" class="inline-flex items-center justify-center rounded-full bg-success/10 px-3 py-1 text-[10px] font-bold text-success">Entrega liberada apos pagar</span>
                   </div>
 
                   <div class="mt-4 rounded-[1.5rem] bg-muted/35 p-4">
@@ -542,7 +714,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i data-lucide="clock-3" class="h-5 w-5"></i>
                       </div>
                     </div>
-                    <p class="mt-2 text-sm text-primary-foreground/72">Valido ate ${expirationLabel}</p>
+                    <p id="pix-timer-caption" class="mt-2 text-sm text-primary-foreground/72">Valido ate ${expirationLabel}</p>
                   </div>
                 </div>
 
@@ -552,8 +724,8 @@ document.addEventListener('DOMContentLoaded', () => {
                       <i data-lucide="badge-check" class="h-5 w-5"></i>
                     </div>
                     <div class="space-y-2">
-                      <p class="text-xl font-bold leading-tight text-primary-foreground">Pagamento identificado automaticamente</p>
-                      <p class="text-[15px] leading-8 text-primary-foreground/72">
+                      <p id="pix-payment-state-title" class="text-xl font-bold leading-tight text-primary-foreground">Pagamento identificado automaticamente</p>
+                      <p id="pix-payment-state-description" class="text-[15px] leading-8 text-primary-foreground/72">
                         Assim que o Pix for compensado, seu pedido entra na fila de expedicao e nossa equipe confirma a entrega.
                       </p>
                     </div>
@@ -631,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   </div>
                   <div class="rounded-[1.5rem] border border-primary-foreground/10 bg-primary-foreground/7 px-4 py-4">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Confirmacao do pedido</p>
-                    <p class="mt-2 text-sm leading-7 text-primary-foreground/74">Nossa equipe recebe a confirmacao do Pix e inicia a entrega logo em seguida.</p>
+                    <p id="pix-order-confirmation-copy" class="mt-2 text-sm leading-7 text-primary-foreground/74">Nossa equipe recebe a confirmacao do Pix e inicia a entrega logo em seguida.</p>
                   </div>
                   <div class="rounded-[1.5rem] border border-primary-foreground/10 bg-primary-foreground/7 px-4 py-4">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Precisa de ajuda?</p>
@@ -705,6 +877,12 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(countdown);
       }
     }, 1000);
+
+    startPixStatusPolling({
+      transactionId,
+      total,
+      countdownId: countdown
+    });
   }
 
   // Initial validation
