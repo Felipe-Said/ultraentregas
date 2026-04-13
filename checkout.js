@@ -309,9 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     container.innerHTML = `
       <div style="text-align: center; padding: 1.5rem 0;">
-        <!-- PIX Icon -->
-        <div style="width: 72px; height: 72px; background: hsl(var(--success) / 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
-          <i data-lucide="qr-code" style="width: 36px; height: 36px; color: hsl(var(--success));"></i>
+        <!-- PIX QR Code -->
+        <div style="margin: 0 auto 1rem; display: flex; justify-content: center;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixCode)}" alt="QR Code Pix" style="border-radius: 0.5rem; border: 2px solid hsl(var(--border)); padding: 0.5rem; background: #fff;" width="200" height="200" />
         </div>
 
         <h2 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 0.25rem;">Pagamento Pix Gerado!</h2>
