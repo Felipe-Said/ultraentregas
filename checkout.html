@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ligeirinho Gás e Água</title>
+  <meta name="description" content="Gás e água com entrega rápida na sua porta. Peça agora!" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-background" style="font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased;">
+
+  <!-- ═══ Urgency Bar ═══ -->
+  <div class="bg-destructive/90 text-destructive-foreground py-2 px-4 text-center">
+    <div class="flex items-center justify-center gap-2 text-xs font-bold">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert h-3.5 w-3.5 animate-pulse"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+      <span>OFERTA EXPIRA EM <span id="countdown">09:55</span></span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flame h-3.5 w-3.5 animate-pulse"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+    </div>
+  </div>
+
+  <!-- ═══ Header ═══ -->
+  <header class="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border px-4 py-3">
+    <div class="mx-auto max-w-lg flex items-center gap-3">
+      <a href="/" class="p-1.5 rounded-full hover:bg-muted" title="Voltar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left h-5 w-5 text-foreground"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+      </a>
+      <img src="/ligeirinho-logo.png" alt="Ligeirinho" class="h-8 w-8 rounded-lg object-contain" onerror="this.style.display='none'" />
+      <div class="flex-1">
+        <h1 class="text-sm font-bold text-foreground">Finalizar Pedido</h1>
+        <p class="text-[10px] text-muted-foreground">Checkout Seguro</p>
+      </div>
+      <div class="flex items-center gap-1 text-[10px] text-success font-semibold">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield h-3 w-3"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path></svg>
+        <span>SSL Seguro</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="mx-auto max-w-lg px-4 py-4">
+
+    <!-- ═══ Stepper ═══ -->
+    <div class="flex items-center justify-between mb-6" id="stepper">
+      <div class="flex items-center gap-1 flex-1">
+        <div class="flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold transition-all bg-primary text-primary-foreground shadow-lg" data-step="1">1</div>
+        <span class="text-[10px] font-semibold text-foreground" data-label="1">Dados</span>
+        <div class="flex-1 h-0.5 mx-1 rounded bg-muted" data-line="1"></div>
+      </div>
+      <div class="flex items-center gap-1 flex-1">
+        <div class="flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold transition-all bg-muted text-muted-foreground" data-step="2">2</div>
+        <span class="text-[10px] font-semibold text-muted-foreground" data-label="2">Endereço</span>
+        <div class="flex-1 h-0.5 mx-1 rounded bg-muted" data-line="2"></div>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold transition-all bg-muted text-muted-foreground" data-step="3">3</div>
+        <span class="text-[10px] font-semibold text-muted-foreground" data-label="3">Pedido</span>
+      </div>
+    </div>
+
+    <!-- ═══ Social Proof ═══ -->
+    <div class="flex items-center gap-2 bg-accent/10 rounded-xl px-3 py-2 mb-4">
+      <div class="flex -space-x-1.5">
+        <div class="h-5 w-5 rounded-full bg-primary/20 border-2 border-card"></div>
+        <div class="h-5 w-5 rounded-full bg-primary/20 border-2 border-card"></div>
+        <div class="h-5 w-5 rounded-full bg-primary/20 border-2 border-card"></div>
+      </div>
+      <p class="text-[10px] text-foreground/70"><span class="font-bold text-primary" id="people-count">15 pessoas</span> finalizando pedidos agora</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- STEP 1: Dados                                          -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="step-panel active" id="step-1" style="display:block;">
+      <div class="bg-card rounded-2xl border border-border p-4 space-y-4 shadow-sm">
+        <h2 class="text-sm font-bold text-card-foreground flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user h-4 w-4 text-primary"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Seus Dados
+        </h2>
+        <div>
+          <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">Nome completo *</label>
+          <input id="inp-nome" type="text" placeholder="Digite seu nome completo" autocomplete="name" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">E-mail *</label>
+          <input id="inp-email" type="email" placeholder="seu@email.com" autocomplete="email" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">CPF *</label>
+          <input id="inp-cpf" type="text" placeholder="000.000.000-00" maxlength="14" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">Telefone / WhatsApp *</label>
+          <input id="inp-phone" type="tel" placeholder="(11) 99999-9999" maxlength="15" autocomplete="tel" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+        </div>
+      </div>
+      <button id="btn-step1" disabled class="w-full bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-all shadow-lg mt-4">Continuar para Endereço →</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- STEP 2: Endereço                                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="step-panel" id="step-2" style="display:none;">
+      <div class="bg-card rounded-2xl border border-border p-4 space-y-4 shadow-sm">
+        <h2 class="text-sm font-bold text-card-foreground flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide h-4 w-4 text-primary"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+          Endereço de Entrega
+        </h2>
+        <div>
+          <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">CEP *</label>
+          <div class="flex gap-2">
+            <input id="inp-cep" type="text" placeholder="00000-000" maxlength="9" class="flex-1 bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+            <button id="btn-buscar-cep" class="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:brightness-110 transition-all">Buscar</button>
+          </div>
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">Rua *</label>
+          <input id="inp-rua" type="text" placeholder="Nome da rua" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">Número *</label>
+            <input id="inp-num" type="text" placeholder="Nº" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+          </div>
+          <div style="flex:2;">
+            <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">Complemento</label>
+            <input id="inp-comp" type="text" placeholder="Apto, bloco..." class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+          </div>
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">Bairro *</label>
+          <input id="inp-bairro" type="text" placeholder="Bairro" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+        </div>
+        <div class="flex gap-2">
+          <div style="flex:3;">
+            <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">Cidade *</label>
+            <input id="inp-cidade" type="text" placeholder="Cidade" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+          </div>
+          <div class="flex-1">
+            <label class="text-[11px] font-semibold text-foreground/70 mb-1 block">UF *</label>
+            <input id="inp-uf" type="text" placeholder="SP" maxlength="2" style="text-transform:uppercase;" class="w-full bg-muted/50 border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary" />
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button class="flex-1 border-2 border-border rounded-xl py-3 text-sm font-bold text-muted-foreground hover:bg-muted/50 transition-all" onclick="goStep(1)">← Voltar</button>
+        <button id="btn-step2" disabled class="flex-[2] bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-all shadow-lg">Continuar para Pedido →</button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- STEP 3: Resumo do Pedido                               -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="step-panel" id="step-3" style="display:none;">
+      <!-- Items -->
+      <div class="bg-card rounded-2xl border border-border p-4 shadow-sm mb-4">
+        <h2 class="text-sm font-bold text-card-foreground flex items-center gap-2 mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide h-4 w-4 text-primary"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          Resumo do Pedido
+        </h2>
+        <div id="order-items"></div>
+      </div>
+
+      <!-- Delivery -->
+      <div class="bg-card rounded-2xl border border-border p-4 shadow-sm mb-4">
+        <h2 class="text-sm font-bold text-card-foreground flex items-center gap-2 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide h-4 w-4 text-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+          Entrega &amp; Pagamento
+        </h2>
+        <p id="delivery-address" class="text-xs text-muted-foreground" style="line-height:1.4;"></p>
+        <div class="mt-3 px-3 py-2.5 bg-[hsl(var(--success)/0.08)] rounded-xl flex items-center gap-2">
+          <svg width="16" height="16" fill="none" stroke="hsl(var(--success))" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="text-xs font-semibold text-success">Frete Grátis — Entrega em 30-50 min</span>
+        </div>
+        <p class="text-xs text-muted-foreground mt-2">💰 Pagamento na entrega (Pix, dinheiro ou cartão)</p>
+      </div>
+
+      <!-- Totals -->
+      <div class="bg-card rounded-2xl border border-border p-4 shadow-sm mb-4">
+        <div class="flex justify-between text-xs text-muted-foreground mb-2">
+          <span>Subtotal</span><span id="review-subtotal">R$0,00</span>
+        </div>
+        <div class="flex justify-between text-xs mb-2">
+          <span class="text-success font-bold">Entrega</span>
+          <span class="text-success font-bold">Grátis</span>
+        </div>
+        <div class="border-t border-border pt-2 flex justify-between items-center">
+          <span class="font-bold">Total</span>
+          <span id="review-total" class="text-lg font-extrabold">R$0,00</span>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button class="flex-1 border-2 border-border rounded-xl py-3 text-sm font-bold text-muted-foreground hover:bg-muted/50 transition-all" onclick="goStep(2)">← Voltar</button>
+        <button id="btn-confirm" class="flex-[2] bg-[hsl(var(--success))] text-primary-foreground rounded-xl py-3.5 text-sm font-bold hover:brightness-110 transition-all shadow-lg">✓ Confirmar Pedido</button>
+      </div>
+      <p class="text-center text-[10px] text-muted-foreground mt-3 flex items-center justify-center gap-1">
+        <svg width="12" height="12" fill="none" stroke="hsl(var(--success))" stroke-width="2" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        Compra 100% segura • Seus dados estão protegidos
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="border-t border-border bg-muted/30 px-4 py-6 mt-6">
+    <div class="mx-auto max-w-lg text-center space-y-3">
+      <div class="flex items-center justify-center gap-2">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="1.5" class="opacity-70"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="text-xs font-semibold text-foreground">Loja Certificada RA1000</span>
+      </div>
+      <div class="text-[11px]">
+        <a href="#" class="text-primary underline hover:no-underline">Política de Privacidade</a>
+        <span class="text-muted-foreground mx-1">•</span>
+        <a href="#" class="text-primary underline hover:no-underline">Termos de Uso</a>
+        <span class="text-muted-foreground mx-1">•</span>
+        <a href="#" class="text-primary underline hover:no-underline">Política de Trocas</a>
+      </div>
+      <div class="text-[10px] text-muted-foreground leading-relaxed">
+        Ligeirinho Gás e Água Ltda. — CNPJ: 64.885.360/0001-01<br />
+        © 2026 Ligeirinho Gás e Água. Todos os direitos reservados.
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/checkout.js"></script>
+</body>
+</html>

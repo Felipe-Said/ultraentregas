@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+.env.local
+.vercel
+.admin-config.json
+.api-keys.json
+supabase_project.json
+org_body.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store

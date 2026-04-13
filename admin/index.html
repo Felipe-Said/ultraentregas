@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Ligeirinho Gás e Água</title>
+  
+  <!-- Auth Guard -->
+  <script>
+    if (!localStorage.getItem('ligeirinho_admin_token')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <link rel="stylesheet" href="../style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --admin-blue: #164ef3;
+      --admin-blue-light: #3b6ff7;
+      --admin-blue-dark: #0950dc;
+      --admin-gold: hsl(38 95% 55%);
+    }
+    body { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* ─── Sidebar ─── */
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 260px; z-index: 50;
+      display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(.32,.72,0,1);
+      background: linear-gradient(180deg, #0a1628 0%, #0d1f3c 40%, #122a52 100%);
+    }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; backdrop-filter: blur(4px); }
+    .main-content { margin-left: 260px; min-height: 100vh; background: var(--color-background); }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 1.25rem; margin: 2px 0.75rem; border-radius: 0.75rem;
+      font-size: 0.8125rem; font-weight: 500; color: rgba(255,255,255,.5);
+      cursor: pointer; transition: all 0.2s; text-decoration: none; position: relative;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(22,78,243,.35), rgba(22,78,243,.15));
+      color: #fff; font-weight: 700;
+      box-shadow: 0 0 20px rgba(22,78,243,.15), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 60%; border-radius: 0 3px 3px 0; background: var(--admin-blue-light);
+    }
+
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+
+    /* ─── Cards ─── */
+    .admin-card {
+      background: #fff; border-radius: 1rem; border: 1px solid hsl(220 15% 93%);
+      box-shadow: 0 1px 3px rgba(0,0,0,.03), 0 4px 16px -4px rgba(0,0,0,.06);
+      transition: box-shadow 0.2s;
+    }
+    .admin-card:hover { box-shadow: 0 4px 20px -4px rgba(0,0,0,.1), 0 8px 32px -8px rgba(0,0,0,.05); }
+    .admin-card-header {
+      padding: 1rem 1.5rem; border-bottom: 1px solid hsl(220 15% 95%);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .admin-card-body { padding: 1.5rem; }
+
+    /* ─── Metric Cards ─── */
+    .metric-card {
+      background: #fff; border-radius: 1rem; padding: 1.25rem 1.5rem;
+      border: 1px solid hsl(220 15% 93%); position: relative; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,.03), 0 4px 12px -4px rgba(0,0,0,.06);
+      transition: all 0.25s;
+    }
+    .metric-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px -8px rgba(0,0,0,.12); }
+    .metric-card::after {
+      content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px;
+      border-radius: 50%; opacity: 0.06; transform: translate(30%, -30%);
+    }
+    .metric-card.blue::after { background: var(--admin-blue); }
+    .metric-card.green::after { background: hsl(152 70% 42%); }
+    .metric-card.gold::after { background: var(--admin-gold); }
+    .metric-card.indigo::after { background: hsl(250 80% 55%); }
+
+    /* ─── Form Inputs ─── */
+    .admin-input {
+      width: 100%; background: hsl(210 20% 98%); border: 1.5px solid hsl(220 15% 91%);
+      border-radius: 0.75rem; padding: 0.75rem 1rem; font-size: 0.8125rem;
+      color: hsl(220 25% 10%); outline: none; box-sizing: border-box; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .admin-input:focus { border-color: var(--admin-blue); box-shadow: 0 0 0 4px rgba(22,78,243,.08); }
+    .admin-input::placeholder { color: hsl(220 10% 62%); }
+    .admin-input.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.75rem; }
+
+    .admin-label { font-size: 0.6875rem; font-weight: 700; color: hsl(220 15% 40%); margin-bottom: 0.5rem; display: block; letter-spacing: 0.02em; }
+
+    /* ─── Buttons ─── */
+    .admin-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.625rem 1.5rem; border-radius: 0.75rem;
+      font-size: 0.8125rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .admin-btn-primary {
+      background: linear-gradient(135deg, var(--admin-blue), var(--admin-blue-dark));
+      color: #fff; box-shadow: 0 2px 8px rgba(22,78,243,.25), inset 0 1px 0 rgba(255,255,255,.15);
+    }
+    .admin-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(22,78,243,.3); }
+    .admin-btn-outline {
+      background: transparent; border: 1.5px solid hsl(220 15% 88%); color: hsl(220 15% 30%);
+    }
+    .admin-btn-outline:hover { background: hsl(220 15% 97%); border-color: hsl(220 15% 80%); }
+
+    /* ─── Badge ─── */
+    .admin-badge {
+      font-size: 0.625rem; font-weight: 800; padding: 0.2rem 0.625rem; border-radius: 9999px;
+      letter-spacing: 0.03em; text-transform: uppercase;
+    }
+    .admin-badge-active { background: hsl(152 70% 42% / 0.12); color: hsl(152 70% 38%); }
+    .admin-badge-inactive { background: hsl(220 15% 94%); color: hsl(220 10% 55%); }
+
+    /* ─── Tutorial ─── */
+    .tutorial-step { display: flex; gap: 1rem; padding: 1rem 0; }
+    .tutorial-step + .tutorial-step { border-top: 1px solid hsl(220 15% 95%); }
+    .tutorial-num {
+      width: 2rem; height: 2rem; border-radius: 0.5rem;
+      background: linear-gradient(135deg, rgba(22,78,243,.1), rgba(22,78,243,.05));
+      color: var(--admin-blue); display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 800; flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .main-content { margin-left: 0; }
+      .mobile-header { display: flex !important; }
+    }
+    @media (min-width: 769px) { .mobile-header { display: none !important; } }
+  </style>
+</head>
+<body class="bg-background text-foreground min-h-screen">
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ═══ Sidebar ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Logo -->
+    <div style="padding: 1.5rem 1.25rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.08);">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.625rem; background: linear-gradient(135deg, var(--admin-blue), var(--admin-blue-dark)); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(22,78,243,.3);">
+          <i data-lucide="flame" class="w-4 h-4" style="color: #fff;"></i>
+        </div>
+        <div>
+          <p style="font-size: 0.875rem; font-weight: 800; color: #fff; letter-spacing: -0.01em;">Ligeirinho</p>
+          <p style="font-size: 0.625rem; color: rgba(255,255,255,.4); font-weight: 500;">Painel Admin</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav style="flex: 1; padding: 0.75rem 0;">
+      <p style="font-size: 0.5625rem; font-weight: 700; color: rgba(255,255,255,.25); text-transform: uppercase; letter-spacing: 0.1em; padding: 0.75rem 1.5rem 0.5rem;">Menu</p>
+      <a class="nav-item active" data-section="dashboard" onclick="switchSection('dashboard')">
+        <i data-lucide="layout-dashboard" class="w-[18px] h-[18px]"></i> Dashboard
+      </a>
+      <a class="nav-item" data-section="api" onclick="switchSection('api')">
+        <i data-lucide="key-round" class="w-[18px] h-[18px]"></i> API
+        <span id="nav-api-badge" class="admin-badge admin-badge-inactive" style="margin-left: auto; font-size: 8px;">—</span>
+      </a>
+      <a class="nav-item" data-section="pixel" onclick="switchSection('pixel')">
+        <i data-lucide="activity" class="w-[18px] h-[18px]"></i> Pixel
+      </a>
+      <a class="nav-item" data-section="notifications" onclick="switchSection('notifications')">
+        <i data-lucide="bell" class="w-[18px] h-[18px]"></i> Notificações
+      </a>
+    </nav>
+
+    <!-- Sidebar footer -->
+    <div style="padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,.08);">
+      <a href="/" style="display: flex; align-items: center; gap: 0.625rem; font-size: 0.75rem; color: rgba(255,255,255,.4); text-decoration: none; transition: color 0.2s;" onmouseenter="this.style.color='rgba(255,255,255,.8)'" onmouseleave="this.style.color='rgba(255,255,255,.4)'">
+        <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Ver Loja
+      </a>
+      <button onclick="logout()" class="nav-item" style="color: #ff4d4d; border: none; background: none; width: 100%; text-align: left; cursor: pointer; margin-top: 1rem;">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Sair</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══ Main Content ═══ -->
+  <div class="main-content">
+
+    <!-- Top Gradient Bar -->
+    <div style="background: linear-gradient(160deg,#164ef3,#0950dc 40%,#0c53b6); padding: 2rem 2rem 3.5rem; position: relative; overflow: hidden;">
+      <div style="position: absolute; top: 0; right: 0; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,.06) 0%, transparent 70%); transform: translate(30%,-30%);"></div>
+      <div style="position: absolute; bottom: 0; left: 0; width: 300px; height: 300px; background: radial-gradient(circle, rgba(59,111,247,.3) 0%, transparent 70%); transform: translate(-30%,40%);"></div>
+      
+      <!-- Mobile hamburger -->
+      <div class="mobile-header" style="margin-bottom: 1rem;">
+        <button onclick="openSidebar()" style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.1); cursor: pointer; color: #fff; backdrop-filter: blur(8px);">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div style="position: relative; z-index: 1;" id="header-section">
+        <h1 id="header-title" style="font-size: 1.75rem; font-weight: 900; color: #fff; letter-spacing: -0.03em; margin-bottom: 0.25rem;">Dashboard</h1>
+        <p id="header-subtitle" style="font-size: 0.875rem; color: rgba(255,255,255,.65); font-weight: 500;">Visão geral das métricas da oferta</p>
+      </div>
+    </div>
+
+    <!-- Content area (pulls up over the gradient) -->
+    <div style="padding: 0 1.5rem 2rem; margin-top: -1.5rem; position: relative; z-index: 2;">
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION: Dashboard                          -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="section-panel active" id="section-dashboard">
+        <!-- Metrics Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="metric-card blue">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span style="font-size: 0.6875rem; font-weight: 600; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.05em;">Visitantes</span>
+              <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.625rem; background: linear-gradient(135deg, rgba(22,78,243,.1), rgba(22,78,243,.05)); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="eye" class="w-4 h-4" style="color: var(--admin-blue);"></i>
+              </div>
+            </div>
+            <h2 id="metric-views" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1;">--</h2>
+            <p style="font-size: 0.6875rem; color: hsl(152 70% 42%); font-weight: 600; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="trending-up" class="w-3 h-3"></i> Tráfego ativo
+            </p>
+          </div>
+          <div class="metric-card green">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span style="font-size: 0.6875rem; font-weight: 600; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.05em;">Leads</span>
+              <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.625rem; background: linear-gradient(135deg, hsl(152 70% 42% / .1), hsl(152 70% 42% / .05)); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="shopping-cart" class="w-4 h-4" style="color: hsl(152 70% 42%);"></i>
+              </div>
+            </div>
+            <h2 id="metric-leads" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1;">--</h2>
+            <p style="font-size: 0.6875rem; color: hsl(220 10% 55%); font-weight: 500; margin-top: 0.5rem;">Clique em "Comprar"</p>
+          </div>
+          <div class="metric-card gold">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span style="font-size: 0.6875rem; font-weight: 600; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.05em;">Conversão</span>
+              <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.625rem; background: linear-gradient(135deg, hsl(38 95% 55% / .1), hsl(38 95% 55% / .05)); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="percent" class="w-4 h-4" style="color: hsl(38 95% 55%);"></i>
+              </div>
+            </div>
+            <h2 id="metric-cr" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1;">--</h2>
+            <p style="font-size: 0.6875rem; color: hsl(220 10% 55%); font-weight: 500; margin-top: 0.5rem;">Visitante → Lead</p>
+          </div>
+          <div class="metric-card indigo">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span style="font-size: 0.6875rem; font-weight: 600; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.05em;">Busca CEP</span>
+              <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.625rem; background: linear-gradient(135deg, hsl(250 80% 55% / .1), hsl(250 80% 55% / .05)); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="map-pin" class="w-4 h-4" style="color: hsl(250 80% 55%);"></i>
+              </div>
+            </div>
+            <h2 id="metric-cep" style="font-size: 2.25rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1;">--</h2>
+            <p style="font-size: 0.6875rem; color: hsl(220 10% 55%); font-weight: 500; margin-top: 0.5rem;">Tentativas de frete</p>
+          </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 1.75rem; height: 1.75rem; border-radius: 0.5rem; background: linear-gradient(135deg, rgba(22,78,243,.1), rgba(22,78,243,.05)); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="list" class="w-3.5 h-3.5" style="color: var(--admin-blue);"></i>
+              </div>
+              <span style="font-size: 0.875rem; font-weight: 800;">Últimas Interações</span>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; font-size: 0.8125rem; text-align: left; border-collapse: collapse;">
+              <thead>
+                <tr style="border-bottom: 1px solid hsl(220 15% 95%);">
+                  <th style="padding: 0.875rem 1.25rem; font-size: 0.625rem; font-weight: 700; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.08em;">Horário</th>
+                  <th style="padding: 0.875rem 1.25rem; font-size: 0.625rem; font-weight: 700; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.08em;">Evento</th>
+                  <th style="padding: 0.875rem 1.25rem; font-size: 0.625rem; font-weight: 700; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.08em;">Detalhes</th>
+                  <th style="padding: 0.875rem 1.25rem; font-size: 0.625rem; font-weight: 700; color: hsl(220 10% 55%); text-transform: uppercase; letter-spacing: 0.08em;">Sessão</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table">
+                <tr><td colspan="4" style="padding: 2rem; text-align: center; color: hsl(220 10% 60%);">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION: API Keys                           -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="section-panel" id="section-api">
+        <div class="admin-card" style="margin-bottom: 1rem;">
+          <div class="admin-card-header">
+            <div style="display: flex; align-items: center; gap: 0.625rem;">
+              <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: linear-gradient(135deg, hsl(38 95% 55% / .12), hsl(38 95% 55% / .05)); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="key-round" class="w-4 h-4" style="color: hsl(38 95% 55%);"></i>
+              </div>
+              <span style="font-size: 0.875rem; font-weight: 800;">Titans Hub — Gateway Pix</span>
+            </div>
+            <span id="api-status-badge" class="admin-badge admin-badge-inactive">Sem chaves</span>
+          </div>
+          <div class="admin-card-body" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div>
+              <label class="admin-label">Chave Pública (publicKey)</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input id="inp-public-key" type="password" placeholder="pk_..." class="admin-input mono" style="flex: 1;" />
+                <button onclick="toggleKeyVisibility('inp-public-key', this)" class="admin-btn admin-btn-outline" style="padding: 0.5rem 0.75rem;"><i data-lucide="eye" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+            <div>
+              <label class="admin-label">Chave Secreta (secretKey)</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input id="inp-secret-key" type="password" placeholder="sk_..." class="admin-input mono" style="flex: 1;" />
+                <button onclick="toggleKeyVisibility('inp-secret-key', this)" class="admin-btn admin-btn-outline" style="padding: 0.5rem 0.75rem;"><i data-lucide="eye" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <button id="btn-save-keys" class="admin-btn admin-btn-primary"><i data-lucide="save" class="w-3.5 h-3.5"></i> Salvar Chaves</button>
+              <span id="api-save-feedback" style="font-size: 0.75rem; font-weight: 700; opacity: 0; transition: opacity 0.3s;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-body" style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <div style="width: 2rem; height: 2rem; border-radius: 0.5rem; background: hsl(152 70% 42% / .08); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i data-lucide="shield-check" class="w-4 h-4" style="color: hsl(152 70% 42%);"></i>
+            </div>
+            <p style="font-size: 0.75rem; color: hsl(220 10% 50%); line-height: 1.6;">As chaves são enviadas ao servidor proxy e nunca ficam expostas no frontend. O checkout chama <code style="font-size: 0.6875rem; background: hsl(220 15% 95%); padding: 0.15rem 0.375rem; border-radius: 0.25rem; font-weight: 600;">POST /api/pix/create</code> que faz a requisição autenticada.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION: Pixel / Tags                       -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="section-panel" id="section-pixel">
+
+        <!-- Platform Tabs -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <button class="pixel-tab active" data-platform="facebook" onclick="switchPixelTab('facebook')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: 0.75rem; font-size: 0.8125rem; font-weight: 700; cursor: pointer; transition: all 0.25s; border: 1.5px solid; background: #1877f2; color: #fff; border-color: #1877f2; box-shadow: 0 2px 8px rgba(24,119,242,.3);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook Pixel
+          </button>
+          <button class="pixel-tab" data-platform="google" onclick="switchPixelTab('google')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; border-radius: 0.75rem; font-size: 0.8125rem; font-weight: 700; cursor: pointer; transition: all 0.25s; border: 1.5px solid hsl(220 15% 88%); background: transparent; color: hsl(220 15% 35%);">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google Ads
+          </button>
+        </div>
+
+        <!-- Facebook Pixel Panel -->
+        <div id="pixel-panel-facebook">
+          <div id="fb-pixels-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+          <button onclick="addPixelRow()" class="admin-btn admin-btn-outline" style="margin-top: 0.75rem; width: 100%; justify-content: center; padding: 0.75rem; border-style: dashed;">
+            <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Facebook Pixel
+          </button>
+          
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1.5rem;">
+            <button id="btn-save-pixels" class="admin-btn admin-btn-primary"><i data-lucide="save" class="w-3.5 h-3.5"></i> Salvar Pixels</button>
+            <span id="pixel-save-feedback" style="font-size: 0.75rem; font-weight: 700; opacity: 0; transition: opacity 0.3s;"></span>
+          </div>
+
+          <div class="admin-card" style="margin-top: 1.5rem;">
+            <div class="admin-card-body" style="display: flex; align-items: flex-start; gap: 0.625rem; padding: 1rem 1.25rem;">
+              <i data-lucide="alert-triangle" class="w-4 h-4" style="color: hsl(38 90% 45%); flex-shrink: 0; margin-top: 1px;"></i>
+              <span style="font-size: 0.75rem; color: hsl(220 15% 40%); line-height: 1.5;">O evento <strong>Purchase</strong> é enviado a <strong>todos os Pixels</strong> quando o Pix é pago. Eventos de PageView/AddToCart não são enviados para evitar poluição no seu gerenciador de anúncios.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Ads Panel -->
+        <div id="pixel-panel-google" style="display: none;">
+          <div id="gtag-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+          <button onclick="addGtagRow()" class="admin-btn" style="margin-top: 0.75rem; width: 100%; justify-content: center; padding: 0.75rem; border: 1.5px dashed rgba(66,133,244,.4); background: transparent; color: #4285F4;">
+            <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Google Tag
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1.5rem;">
+            <button id="btn-save-gtags" class="admin-btn" style="background: linear-gradient(135deg, #4285F4, #3367D6); color: #fff; box-shadow: 0 2px 8px rgba(66,133,244,.3);">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i> Salvar Google Tags
+            </button>
+            <span id="gtag-save-feedback" style="font-size: 0.75rem; font-weight: 700; opacity: 0; transition: opacity 0.3s;"></span>
+          </div>
+
+          <div class="admin-card" style="margin-top: 1.5rem; border-color: rgba(66,133,244,.15);">
+            <div class="admin-card-body" style="display: flex; align-items: flex-start; gap: 0.625rem; padding: 1rem 1.25rem;">
+              <i data-lucide="alert-triangle" class="w-4 h-4" style="color: #EA4335; flex-shrink: 0; margin-top: 1px;"></i>
+              <span style="font-size: 0.75rem; color: hsl(220 15% 40%); line-height: 1.5;">A conversão é disparada em <strong>todas as Tags</strong> quando o Pix é pago. Apenas vendas reais disparam a conversão.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION: Notificações                       -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="section-panel" id="section-notifications">
+        <div id="pushcut-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+        <button onclick="addPushcutRow()" class="admin-btn admin-btn-outline" style="margin-top: 0.75rem; width: 100%; justify-content: center; padding: 0.75rem; border-style: dashed;">
+          <i data-lucide="plus" class="w-4 h-4"></i> Adicionar Webhook Pushcut
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1.5rem;">
+          <button id="btn-save-pushcuts" class="admin-btn admin-btn-primary"><i data-lucide="save" class="w-3.5 h-3.5"></i> Salvar Webhooks</button>
+          <span id="pushcut-save-feedback" style="font-size: 0.75rem; font-weight: 700; opacity: 0; transition: opacity 0.3s;"></span>
+        </div>
+
+        <!-- Tutorial -->
+        <div class="admin-card" style="margin-top: 1.5rem;">
+          <div class="admin-card-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="width: 1.75rem; height: 1.75rem; border-radius: 0.5rem; background: linear-gradient(135deg, rgba(22,78,243,.1), rgba(22,78,243,.05)); display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="book-open" class="w-3.5 h-3.5" style="color: var(--admin-blue);"></i>
+              </div>
+              <span style="font-size: 0.875rem; font-weight: 800;">Tutorial</span>
+            </div>
+          </div>
+          <div class="admin-card-body" style="font-size: 0.75rem; color: hsl(220 10% 50%); line-height: 1.6;">
+            <p style="margin-bottom: 0.75rem;">Você pode adicionar <strong>múltiplos webhooks</strong>. Cada venda paga envia notificação para <strong>todos</strong> simultaneamente.</p>
+            <div style="background: #fff; border: 1.5px solid hsl(152 70% 42% / .2); border-radius: 0.875rem; padding: 1rem; display: flex; gap: 0.75rem; align-items: flex-start; box-shadow: 0 2px 8px hsl(152 70% 42% / .06);">
+              <div style="width: 2.25rem; height: 2.25rem; border-radius: 0.625rem; background: hsl(152 70% 42% / .08); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i data-lucide="check-circle-2" class="w-4 h-4" style="color: hsl(152 70% 42%);"></i>
+              </div>
+              <div>
+                <p style="font-size: 0.8125rem; font-weight: 800;">Venda Paga!</p>
+                  POST webhook_url<br/>
+                  { "title": "💰 Venda Paga!",<br/>
+                  &nbsp;&nbsp;"text": "João da Silva — R$119,90 — Botijão 13kg" }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/admin/dashboard.js" type="module"></script>
+  <script>
+    // Default gradient
+    const DEFAULT_GRADIENT = 'linear-gradient(160deg,#164ef3,#0950dc 40%,#0c53b6)';
+    const GOOGLE_GRADIENT = 'linear-gradient(160deg,#4285F4,#3367D6 30%,#34A853 70%,#34A853)';
+    const FACEBOOK_GRADIENT = 'linear-gradient(160deg,#1877f2,#1565c0 40%,#0d47a1)';
+
+    let currentPixelTab = 'facebook';
+
+    // Sidebar navigation
+    const headerTitles = {
+      dashboard: ['Dashboard', 'Visão geral das métricas da oferta'],
+      api: ['Chaves de API', 'Configure as credenciais do gateway Pix'],
+      pixel: null, // dynamic
+      notifications: ['Notificações', 'Receba alertas push de vendas pagas'],
+    };
+
+    function getPixelHeader() {
+      if (currentPixelTab === 'google') return ['Google Ads', 'Tag de conversão — somente vendas pagas'];
+      return ['Facebook Pixel', 'Rastreie apenas vendas pagas'];
+    }
+
+    function switchSection(name) {
+      document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('section-' + name)?.classList.add('active');
+      document.querySelector(`.nav-item[data-section="${name}"]`)?.classList.add('active');
+
+      const titles = name === 'pixel' ? getPixelHeader() : headerTitles[name] || ['Admin', ''];
+      document.getElementById('header-title').textContent = titles[0];
+      document.getElementById('header-subtitle').textContent = titles[1];
+
+      // Apply gradient based on section + pixel tab
+      const header = document.querySelector('.main-content > div:first-child');
+      if (name === 'pixel' && currentPixelTab === 'google') {
+        header.style.background = GOOGLE_GRADIENT;
+      } else if (name === 'pixel' && currentPixelTab === 'facebook') {
+        header.style.background = FACEBOOK_GRADIENT;
+      } else {
+        header.style.background = DEFAULT_GRADIENT;
+      }
+
+      closeSidebar();
+    }
+
+    function switchPixelTab(platform) {
+      currentPixelTab = platform;
+
+      // Toggle panels
+      document.getElementById('pixel-panel-facebook').style.display = platform === 'facebook' ? 'block' : 'none';
+      document.getElementById('pixel-panel-google').style.display = platform === 'google' ? 'block' : 'none';
+
+      // Update tab buttons
+      const fbBtn = document.querySelector('.pixel-tab[data-platform="facebook"]');
+      const gBtn = document.querySelector('.pixel-tab[data-platform="google"]');
+
+      if (platform === 'facebook') {
+        fbBtn.style.background = '#1877f2'; fbBtn.style.color = '#fff'; fbBtn.style.borderColor = '#1877f2'; fbBtn.style.boxShadow = '0 2px 8px rgba(24,119,242,.3)';
+        gBtn.style.background = 'transparent'; gBtn.style.color = 'hsl(220 15% 35%)'; gBtn.style.borderColor = 'hsl(220 15% 88%)'; gBtn.style.boxShadow = 'none';
+      } else {
+        gBtn.style.background = '#4285F4'; gBtn.style.color = '#fff'; gBtn.style.borderColor = '#4285F4'; gBtn.style.boxShadow = '0 2px 8px rgba(66,133,244,.3)';
+        fbBtn.style.background = 'transparent'; fbBtn.style.color = 'hsl(220 15% 35%)'; fbBtn.style.borderColor = 'hsl(220 15% 88%)'; fbBtn.style.boxShadow = 'none';
+      }
+
+      // Update header gradient and title
+      const header = document.querySelector('.main-content > div:first-child');
+      const [title, subtitle] = getPixelHeader();
+      document.getElementById('header-title').textContent = title;
+      document.getElementById('header-subtitle').textContent = subtitle;
+
+      if (platform === 'google') {
+        header.style.background = GOOGLE_GRADIENT;
+      } else {
+        header.style.background = FACEBOOK_GRADIENT;
+      }
+    }
+
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('open');
+      document.getElementById('sidebar-overlay').classList.add('open');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    }
+    function toggleKeyVisibility(inputId, btn) {
+      const inp = document.getElementById(inputId);
+      if (inp.type === 'password') { inp.type = 'text'; btn.innerHTML = '<i data-lucide="eye-off" class="w-4 h-4"></i>'; }
+      else { inp.type = 'password'; btn.innerHTML = '<i data-lucide="eye" class="w-4 h-4"></i>'; }
+      lucide.createIcons();
+    }
+    lucide.createIcons();
+  </script>
+</body>
+</html>
