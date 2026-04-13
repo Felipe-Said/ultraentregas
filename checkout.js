@@ -503,6 +503,25 @@ document.addEventListener('DOMContentLoaded', () => {
                   </div>
                 </div>
 
+                <div class="rounded-[1.7rem] border border-primary-foreground/12 bg-primary-foreground/10 p-5 backdrop-blur-md">
+                  <div class="flex items-start justify-between gap-4">
+                    <div>
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Pix copia e cola</p>
+                      <h3 class="mt-2 font-display text-[2rem] font-extrabold leading-tight text-primary-foreground">Pague sem erro no app do seu banco</h3>
+                    </div>
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/12 text-primary-foreground">
+                      <i data-lucide="copy-check" class="h-5 w-5"></i>
+                    </div>
+                  </div>
+
+                  <div id="pix-code-display" class="mt-5 max-h-44 overflow-auto rounded-[1.5rem] border border-primary-foreground/12 bg-primary-foreground/7 px-4 py-4 font-mono text-[12px] leading-7 text-primary-foreground/92 break-all">${pixCode}</div>
+
+                  <button id="btn-copy-pix" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1.4rem] bg-white px-4 py-4 text-sm font-bold text-primary transition-all hover:bg-primary-foreground/92 shadow-hero-card">
+                    <i data-lucide="copy" class="h-4 w-4"></i>
+                    Copiar codigo Pix
+                  </button>
+                </div>
+
                 <div class="grid gap-4 sm:grid-cols-2">
                   <div class="rounded-[1.6rem] border border-primary-foreground/12 bg-primary-foreground/9 p-5">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Valor total</p>
@@ -560,25 +579,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="rounded-[1.9rem] border border-primary-foreground/12 bg-primary-foreground/10 p-5 backdrop-blur-md">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Pix copia e cola</p>
-                  <h3 class="mt-2 font-display text-[2rem] font-extrabold leading-tight text-primary-foreground">Pague sem erro no app do seu banco</h3>
-                </div>
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/12 text-primary-foreground">
-                  <i data-lucide="copy-check" class="h-5 w-5"></i>
-                </div>
-              </div>
-
-              <div id="pix-code-display" class="mt-5 max-h-44 overflow-auto rounded-[1.5rem] border border-primary-foreground/12 bg-primary-foreground/7 px-4 py-4 font-mono text-[12px] leading-7 text-primary-foreground/92 break-all">${pixCode}</div>
-
-              <button id="btn-copy-pix" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1.4rem] bg-white px-4 py-4 text-sm font-bold text-primary transition-all hover:bg-primary-foreground/92 shadow-hero-card">
-                <i data-lucide="copy" class="h-4 w-4"></i>
-                Copiar codigo Pix
-              </button>
             </div>
 
             <div class="grid gap-5 sm:grid-cols-2">
