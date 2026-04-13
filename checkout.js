@@ -456,184 +456,192 @@ document.addEventListener('DOMContentLoaded', () => {
       minute: '2-digit'
     });
 
+    container.className = 'w-full px-0 py-0';
+    const footer = document.querySelector('footer');
+    if (footer) {
+      footer.style.display = 'none';
+    }
+
     container.innerHTML = `
-      <section class="gradient-hero relative overflow-hidden rounded-[2rem] px-4 pt-5 pb-6 shadow-hero-card">
-        <div class="absolute inset-0 gradient-hero-glow pointer-events-none rounded-[2rem]"></div>
-        <div class="absolute -top-10 left-0 h-28 w-28 rounded-full bg-primary-foreground/10 blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 h-36 w-36 rounded-full bg-primary-foreground/10 blur-3xl"></div>
-        <div class="relative z-10">
-          <div class="flex items-center justify-between gap-3">
-            <div class="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1.5 backdrop-blur-sm">
+      <section class="gradient-hero relative overflow-hidden px-4 pt-8 pb-12">
+        <div class="absolute inset-0 gradient-hero-glow pointer-events-none"></div>
+        <div class="absolute -top-12 left-0 h-32 w-32 rounded-full bg-primary-foreground/8 blur-3xl"></div>
+        <div class="absolute top-1/3 right-0 h-40 w-40 rounded-full bg-primary-foreground/8 blur-3xl"></div>
+        <div class="absolute bottom-10 left-1/3 h-36 w-36 rounded-full bg-primary-foreground/8 blur-3xl"></div>
+
+        <div class="relative z-10 mx-auto max-w-lg">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 backdrop-blur-sm">
               <span class="h-2 w-2 rounded-full bg-success animate-pulse-soft"></span>
-              <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-foreground/90">Pix aguardando pagamento</span>
+              <span class="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-foreground/92">Pix aguardando pagamento</span>
             </div>
-            <div class="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold text-primary-foreground/80 backdrop-blur-sm">
+            <div class="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-[11px] font-semibold text-primary-foreground/80 backdrop-blur-sm">
               <i data-lucide="shield-check" class="h-3.5 w-3.5"></i>
               Pedido protegido
             </div>
           </div>
 
-          <div class="mt-5 text-center">
-            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/60">Finalize no seu banco</p>
-            <h2 class="mt-2 font-display text-3xl font-extrabold leading-tight text-primary-foreground">Seu Pix ja esta pronto</h2>
-            <p class="mt-3 text-sm leading-relaxed text-primary-foreground/72">
+          <div class="mt-8 text-center">
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/62">Finalize no seu banco</p>
+            <h2 class="mt-3 font-display text-3xl font-extrabold leading-tight text-primary-foreground">Seu Pix ja esta pronto</h2>
+            <p class="mx-auto mt-4 max-w-md text-base leading-8 text-primary-foreground/74">
               Escaneie o QR Code ou copie a chave abaixo para concluir o pagamento e liberar a entrega.
             </p>
           </div>
 
-          <div class="mt-5 glass-card rounded-[1.75rem] border border-primary-foreground/10 p-4 shadow-hero-card">
-            <div class="grid gap-4 sm:grid-cols-[1.05fr_0.95fr] sm:items-center">
-              <div class="rounded-[1.5rem] bg-white p-3 shadow-product">
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-primary/70">QR Code Pix</span>
-                  <span class="rounded-full bg-success/10 px-2.5 py-1 text-[10px] font-bold text-success">Entrega liberada apos pagar</span>
-                </div>
-                <div class="mt-3 rounded-[1.25rem] bg-muted/40 p-3">
-                  <img src="${pixQrCodeSrc}" alt="QR Code Pix" class="mx-auto h-auto w-full max-w-[240px] rounded-2xl bg-white p-2 shadow-product" width="240" height="240" />
-                </div>
-              </div>
-
-              <div class="space-y-3">
-                <div class="rounded-[1.5rem] bg-white p-4 shadow-product">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Valor total</p>
-                  <p class="mt-2 font-display text-4xl font-extrabold leading-none text-card-foreground">${formatPrice(total)}</p>
-                  <p class="mt-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <i data-lucide="truck" class="h-3.5 w-3.5 text-success"></i>
-                    Frete gratis e entrega em 30-50 min
-                  </p>
-                </div>
-
-                <div class="rounded-[1.5rem] bg-white p-4 shadow-product">
-                  <div class="flex items-center justify-between gap-3">
-                    <div>
-                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tempo para pagar</p>
-                      <p id="pix-timer" class="mt-2 font-display text-2xl font-extrabold text-destructive">15:00</p>
-                    </div>
-                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
-                      <i data-lucide="clock-3" class="h-5 w-5"></i>
-                    </div>
+          <div class="mt-9 space-y-6">
+            <div class="rounded-[1.9rem] border border-primary-foreground/12 bg-primary-foreground/10 p-5 backdrop-blur-md">
+              <div class="space-y-6">
+                <div class="rounded-[1.7rem] bg-white/96 p-4 shadow-hero-card">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/75">QR Code Pix</span>
+                    <span class="inline-flex items-center justify-center rounded-full bg-success/10 px-3 py-1 text-[10px] font-bold text-success">Entrega liberada apos pagar</span>
                   </div>
-                  <p class="mt-2 text-xs text-muted-foreground">Valido ate ${expirationLabel}</p>
+
+                  <div class="mt-4 rounded-[1.5rem] bg-muted/35 p-4">
+                    <img src="${pixQrCodeSrc}" alt="QR Code Pix" class="mx-auto h-auto w-full max-w-[252px] rounded-[1.4rem] bg-white p-3 shadow-product" width="252" height="252" />
+                  </div>
                 </div>
 
-                <div class="gradient-trust rounded-[1.5rem] border border-success/10 p-4">
-                  <div class="flex items-start gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-success/12 text-success">
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <div class="rounded-[1.6rem] border border-primary-foreground/12 bg-primary-foreground/9 p-5">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Valor total</p>
+                    <p class="mt-3 font-display text-4xl font-extrabold leading-none text-primary-foreground">${formatPrice(total)}</p>
+                    <p class="mt-4 flex items-center gap-2 text-sm font-medium text-primary-foreground/72">
+                      <i data-lucide="truck" class="h-4 w-4 text-success"></i>
+                      Frete gratis e entrega em 30-50 min
+                    </p>
+                  </div>
+
+                  <div class="rounded-[1.6rem] border border-primary-foreground/12 bg-primary-foreground/9 p-5">
+                    <div class="flex items-start justify-between gap-4">
+                      <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Tempo para pagar</p>
+                        <p id="pix-timer" class="mt-3 font-display text-3xl font-extrabold leading-none text-[#ff6259]">15:00</p>
+                      </div>
+                      <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff6259]/12 text-[#ff6259]">
+                        <i data-lucide="clock-3" class="h-5 w-5"></i>
+                      </div>
+                    </div>
+                    <p class="mt-4 text-sm text-primary-foreground/72">Valido ate ${expirationLabel}</p>
+                  </div>
+                </div>
+
+                <div class="rounded-[1.6rem] border border-success/18 bg-success/10 p-5">
+                  <div class="flex items-start gap-4">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-success/15 text-success">
                       <i data-lucide="badge-check" class="h-5 w-5"></i>
                     </div>
-                    <div>
-                      <p class="text-sm font-bold text-card-foreground">Pagamento identificado automaticamente</p>
-                      <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    <div class="space-y-2">
+                      <p class="text-xl font-bold leading-tight text-primary-foreground">Pagamento identificado automaticamente</p>
+                      <p class="text-[15px] leading-8 text-primary-foreground/72">
                         Assim que o Pix for compensado, seu pedido entra na fila de expedicao e nossa equipe confirma a entrega.
                       </p>
                     </div>
                   </div>
                 </div>
+
+                <div class="rounded-[1.6rem] border border-primary-foreground/10 bg-primary-foreground/8 px-4 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="flex -space-x-2">
+                      <img alt="Fabio R." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/fabioreview-ft%20perfil.jpg" />
+                      <img alt="Carla M." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/carlareview-ft%20perfil.jpg" />
+                      <img alt="Maria S." class="h-10 w-10 rounded-full border-2 border-primary object-cover" src="/mariareview-ft%20perfil.jpg" />
+                    </div>
+                    <div class="space-y-1">
+                      <p class="text-lg font-bold leading-tight text-primary-foreground">Atendimento online acompanhando seu pedido</p>
+                      <p class="text-sm leading-6 text-primary-foreground/72">Confirmacao manual e suporte rapido apos o pagamento.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="mt-4 flex items-center justify-between gap-3 rounded-[1.25rem] bg-primary/5 px-3.5 py-3">
-              <div class="flex items-center gap-2">
-                <div class="flex -space-x-1.5">
-                  <img alt="Fabio R." class="h-8 w-8 rounded-full border-2 border-card object-cover" src="/fabioreview-ft%20perfil.jpg" />
-                  <img alt="Carla M." class="h-8 w-8 rounded-full border-2 border-card object-cover" src="/carlareview-ft%20perfil.jpg" />
-                  <img alt="Maria S." class="h-8 w-8 rounded-full border-2 border-card object-cover" src="/mariareview-ft%20perfil.jpg" />
-                </div>
+            <div class="rounded-[1.9rem] border border-primary-foreground/12 bg-primary-foreground/10 p-5 backdrop-blur-md">
+              <div class="flex items-start justify-between gap-4">
                 <div>
-                  <p class="text-xs font-bold text-card-foreground">Atendimento online acompanhando seu pedido</p>
-                  <p class="text-[11px] text-muted-foreground">Confirmacao manual e suporte rapido apos o pagamento.</p>
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Pix copia e cola</p>
+                  <h3 class="mt-2 font-display text-[2rem] font-extrabold leading-tight text-primary-foreground">Pague sem erro no app do seu banco</h3>
+                </div>
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-foreground/12 text-primary-foreground">
+                  <i data-lucide="copy-check" class="h-5 w-5"></i>
                 </div>
               </div>
-              <div class="hidden rounded-full bg-white px-3 py-1 text-[11px] font-bold text-primary shadow-product sm:block">Suporte ativo</div>
+
+              <div id="pix-code-display" class="mt-5 max-h-44 overflow-auto rounded-[1.5rem] border border-primary-foreground/12 bg-primary-foreground/7 px-4 py-4 font-mono text-[12px] leading-7 text-primary-foreground/92 break-all">${pixCode}</div>
+
+              <button id="btn-copy-pix" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-[1.4rem] bg-white px-4 py-4 text-sm font-bold text-primary transition-all hover:bg-primary-foreground/92 shadow-hero-card">
+                <i data-lucide="copy" class="h-4 w-4"></i>
+                Copiar codigo Pix
+              </button>
             </div>
+
+            <div class="grid gap-5 sm:grid-cols-2">
+              <div class="rounded-[1.9rem] border border-primary-foreground/12 bg-primary-foreground/10 p-5 backdrop-blur-md">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/18 text-accent">
+                    <i data-lucide="list-checks" class="h-5 w-5"></i>
+                  </div>
+                  <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Como pagar</p>
+                    <h3 class="text-xl font-bold text-primary-foreground">Siga estes passos</h3>
+                  </div>
+                </div>
+
+                <div class="mt-5 space-y-4">
+                  <div class="flex items-start gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/12 text-xs font-extrabold text-primary-foreground">1</div>
+                    <p class="text-sm leading-7 text-primary-foreground/74">Abra o app do seu banco ou carteira digital.</p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/12 text-xs font-extrabold text-primary-foreground">2</div>
+                    <p class="text-sm leading-7 text-primary-foreground/74">Escolha pagar com Pix Copia e Cola ou leia o QR Code.</p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/12 text-xs font-extrabold text-primary-foreground">3</div>
+                    <p class="text-sm leading-7 text-primary-foreground/74">Cole o codigo acima e confira o valor do pedido.</p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/12 text-xs font-extrabold text-primary-foreground">4</div>
+                    <p class="text-sm leading-7 text-primary-foreground/74">Conclua o pagamento para liberar a confirmacao.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-[1.9rem] border border-primary-foreground/12 bg-primary-foreground/10 p-5 backdrop-blur-md">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-success/12 text-success">
+                    <i data-lucide="shield" class="h-5 w-5"></i>
+                  </div>
+                  <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Pedido protegido</p>
+                    <h3 class="text-xl font-bold text-primary-foreground">Tudo pronto para confirmar</h3>
+                  </div>
+                </div>
+
+                <div class="mt-5 space-y-4">
+                  <div class="rounded-[1.5rem] border border-primary-foreground/10 bg-primary-foreground/7 px-4 py-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Validade do codigo</p>
+                    <p class="mt-2 text-base font-bold text-primary-foreground">${expirationLabel}</p>
+                  </div>
+                  <div class="rounded-[1.5rem] border border-primary-foreground/10 bg-primary-foreground/7 px-4 py-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Confirmacao do pedido</p>
+                    <p class="mt-2 text-sm leading-7 text-primary-foreground/74">Nossa equipe recebe a confirmacao do Pix e inicia a entrega logo em seguida.</p>
+                  </div>
+                  <div class="rounded-[1.5rem] border border-primary-foreground/10 bg-primary-foreground/7 px-4 py-4">
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary-foreground/58">Precisa de ajuda?</p>
+                    <p class="mt-2 text-sm leading-7 text-primary-foreground/74">Mantenha esta tela aberta ate concluir o pagamento para evitar qualquer interrupcao.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <a href="/" class="inline-flex w-full items-center justify-center gap-2 rounded-[1.5rem] bg-primary-foreground px-4 py-4 text-sm font-bold text-primary shadow-hero-card transition-colors hover:bg-primary-foreground/92">
+              <i data-lucide="arrow-left" class="h-4 w-4"></i>
+              Voltar para a loja
+            </a>
           </div>
         </div>
-      </section>
-
-      <section class="mt-4 space-y-4 pb-2">
-        <div class="bg-card rounded-[1.75rem] border border-border p-4 shadow-product">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/70">Pix copia e cola</p>
-              <h3 class="mt-1 font-display text-2xl font-extrabold text-card-foreground">Pague sem erro no app do seu banco</h3>
-            </div>
-            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <i data-lucide="copy-check" class="h-5 w-5"></i>
-            </div>
-          </div>
-
-          <div id="pix-code-display" class="mt-4 rounded-[1.25rem] border border-border bg-muted/30 px-4 py-3 font-mono text-[12px] leading-6 text-card-foreground break-all">${pixCode}</div>
-
-          <button id="btn-copy-pix" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:brightness-110 shadow-hero-card">
-            <i data-lucide="copy" class="h-4 w-4"></i>
-            Copiar codigo Pix
-          </button>
-        </div>
-
-        <div class="grid gap-4 md:grid-cols-2">
-          <div class="bg-card rounded-[1.75rem] border border-border p-4 shadow-product">
-            <div class="flex items-center gap-3">
-              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/15 text-accent">
-                <i data-lucide="list-checks" class="h-5 w-5"></i>
-              </div>
-              <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Como pagar</p>
-                <h3 class="text-lg font-bold text-card-foreground">Siga estes passos</h3>
-              </div>
-            </div>
-
-            <div class="mt-4 space-y-3">
-              <div class="flex items-start gap-3">
-                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">1</div>
-                <p class="text-sm leading-relaxed text-muted-foreground">Abra o app do seu banco ou carteira digital.</p>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">2</div>
-                <p class="text-sm leading-relaxed text-muted-foreground">Escolha pagar com Pix Copia e Cola ou leia o QR Code.</p>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">3</div>
-                <p class="text-sm leading-relaxed text-muted-foreground">Cole o codigo acima e confira o valor do pedido.</p>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">4</div>
-                <p class="text-sm leading-relaxed text-muted-foreground">Conclua o pagamento para liberar a confirmacao.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-card rounded-[1.75rem] border border-border p-4 shadow-product">
-            <div class="flex items-center gap-3">
-              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-success/12 text-success">
-                <i data-lucide="shield" class="h-5 w-5"></i>
-              </div>
-              <div>
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pedido protegido</p>
-                <h3 class="text-lg font-bold text-card-foreground">Tudo pronto para confirmar</h3>
-              </div>
-            </div>
-
-            <div class="mt-4 space-y-3">
-              <div class="rounded-[1.25rem] bg-muted/30 px-4 py-3">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Validade do codigo</p>
-                <p class="mt-1 text-sm font-bold text-card-foreground">${expirationLabel}</p>
-              </div>
-              <div class="rounded-[1.25rem] bg-muted/30 px-4 py-3">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Confirmacao do pedido</p>
-                <p class="mt-1 text-sm text-muted-foreground">Nossa equipe recebe a confirmacao do Pix e inicia a entrega logo em seguida.</p>
-              </div>
-              <div class="rounded-[1.25rem] bg-muted/30 px-4 py-3">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Precisa de ajuda?</p>
-                <p class="mt-1 text-sm text-muted-foreground">Mantenha esta tela aberta ate concluir o pagamento para evitar qualquer interrupcao.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <a href="/" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-bold text-card-foreground shadow-product transition-colors hover:bg-muted/40">
-          <i data-lucide="arrow-left" class="h-4 w-4"></i>
-          Voltar para a loja
-        </a>
       </section>
     `;
 
