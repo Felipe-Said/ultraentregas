@@ -58,8 +58,8 @@ values
   (
     'admin_auth',
     '{
-      "email": "admin@seuprojeto.com",
-      "password": "troque-esta-senha"
+      "email": "saidlabsglobal@gmail.com",
+      "password": "530348Home10"
     }'::jsonb
   )
 on conflict (id) do nothing;
