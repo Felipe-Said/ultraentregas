@@ -74,6 +74,19 @@ document.addEventListener('DOMContentLoaded', () => {
     window.lucide?.createIcons?.();
   }
 
+  function formatRemainingTime(remaining) {
+    const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+    }
+
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
   function getNestedValue(source, path) {
     return path.split('.').reduce((value, key) => {
       if (value && typeof value === 'object' && key in value) {
@@ -433,103 +446,251 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error('Container principal do checkout nao encontrado.');
     }
 
-    const pixQrCodeSrc = qrCodeImage || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixCode)}`;
+    const pixQrCodeSrc = qrCodeImage || `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(pixCode)}`;
+    const parsedExpiration = expiration ? new Date(expiration) : new Date(Date.now() + 15 * 60 * 1000);
+    const expDate = Number.isNaN(parsedExpiration.getTime()) ? new Date(Date.now() + 15 * 60 * 1000) : parsedExpiration;
+    const expirationLabel = expDate.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
-    // Calculate expiration countdown
-    const expDate = expiration ? new Date(expiration) : new Date(Date.now() + 15 * 60 * 1000);
-    
     container.innerHTML = `
-      <div style="text-align: center; padding: 1.5rem 0;">
-        <!-- PIX QR Code -->
-        <div style="margin: 0 auto 1rem; display: flex; justify-content: center;">
-          <img src="${pixQrCodeSrc}" alt="QR Code Pix" style="border-radius: 0.5rem; border: 2px solid hsl(var(--border)); padding: 0.5rem; background: #fff;" width="200" height="200" />
+      <section class="gradient-hero relative overflow-hidden rounded-[2rem] px-4 pt-5 pb-6 shadow-hero-card">
+        <div class="absolute inset-0 gradient-hero-glow pointer-events-none rounded-[2rem]"></div>
+        <div class="absolute -top-10 left-0 h-28 w-28 rounded-full bg-primary-foreground/10 blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 h-36 w-36 rounded-full bg-primary-foreground/10 blur-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between gap-3">
+            <div class="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1.5 backdrop-blur-sm">
+              <span class="h-2 w-2 rounded-full bg-success animate-pulse-soft"></span>
+              <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-foreground/90">Pix aguardando pagamento</span>
+            </div>
+            <div class="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold text-primary-foreground/80 backdrop-blur-sm">
+              <i data-lucide="shield-check" class="h-3.5 w-3.5"></i>
+              Pedido protegido
+            </div>
+          </div>
+
+          <div class="mt-5 text-center">
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-primary-foreground/60">Finalize no seu banco</p>
+            <h2 class="mt-2 font-display text-3xl font-extrabold leading-tight text-primary-foreground">Seu Pix ja esta pronto</h2>
+            <p class="mt-3 text-sm leading-relaxed text-primary-foreground/72">
+              Escaneie o QR Code ou copie a chave abaixo para concluir o pagamento e liberar a entrega.
+            </p>
+          </div>
+
+          <div class="mt-5 glass-card rounded-[1.75rem] border border-primary-foreground/10 p-4 shadow-hero-card">
+            <div class="grid gap-4 sm:grid-cols-[1.05fr_0.95fr] sm:items-center">
+              <div class="rounded-[1.5rem] bg-white p-3 shadow-product">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-primary/70">QR Code Pix</span>
+                  <span class="rounded-full bg-success/10 px-2.5 py-1 text-[10px] font-bold text-success">Entrega liberada apos pagar</span>
+                </div>
+                <div class="mt-3 rounded-[1.25rem] bg-muted/40 p-3">
+                  <img src="${pixQrCodeSrc}" alt="QR Code Pix" class="mx-auto h-auto w-full max-w-[240px] rounded-2xl bg-white p-2 shadow-product" width="240" height="240" />
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div class="rounded-[1.5rem] bg-white p-4 shadow-product">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Valor total</p>
+                  <p class="mt-2 font-display text-4xl font-extrabold leading-none text-card-foreground">${formatPrice(total)}</p>
+                  <p class="mt-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <i data-lucide="truck" class="h-3.5 w-3.5 text-success"></i>
+                    Frete gratis e entrega em 30-50 min
+                  </p>
+                </div>
+
+                <div class="rounded-[1.5rem] bg-white p-4 shadow-product">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tempo para pagar</p>
+                      <p id="pix-timer" class="mt-2 font-display text-2xl font-extrabold text-destructive">15:00</p>
+                    </div>
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                      <i data-lucide="clock-3" class="h-5 w-5"></i>
+                    </div>
+                  </div>
+                  <p class="mt-2 text-xs text-muted-foreground">Valido ate ${expirationLabel}</p>
+                </div>
+
+                <div class="gradient-trust rounded-[1.5rem] border border-success/10 p-4">
+                  <div class="flex items-start gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-success/12 text-success">
+                      <i data-lucide="badge-check" class="h-5 w-5"></i>
+                    </div>
+                    <div>
+                      <p class="text-sm font-bold text-card-foreground">Pagamento identificado automaticamente</p>
+                      <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        Assim que o Pix for compensado, seu pedido entra na fila de expedicao e nossa equipe confirma a entrega.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between gap-3 rounded-[1.25rem] bg-primary/5 px-3.5 py-3">
+              <div class="flex items-center gap-2">
+                <div class="flex -space-x-1.5">
+                  <img alt="Fabio R." class="h-8 w-8 rounded-full border-2 border-card object-cover" src="/fabioreview-ft%20perfil.jpg" />
+                  <img alt="Carla M." class="h-8 w-8 rounded-full border-2 border-card object-cover" src="/carlareview-ft%20perfil.jpg" />
+                  <img alt="Maria S." class="h-8 w-8 rounded-full border-2 border-card object-cover" src="/mariareview-ft%20perfil.jpg" />
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-card-foreground">Atendimento online acompanhando seu pedido</p>
+                  <p class="text-[11px] text-muted-foreground">Confirmacao manual e suporte rapido apos o pagamento.</p>
+                </div>
+              </div>
+              <div class="hidden rounded-full bg-white px-3 py-1 text-[11px] font-bold text-primary shadow-product sm:block">Suporte ativo</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-4 space-y-4 pb-2">
+        <div class="bg-card rounded-[1.75rem] border border-border p-4 shadow-product">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary/70">Pix copia e cola</p>
+              <h3 class="mt-1 font-display text-2xl font-extrabold text-card-foreground">Pague sem erro no app do seu banco</h3>
+            </div>
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <i data-lucide="copy-check" class="h-5 w-5"></i>
+            </div>
+          </div>
+
+          <div id="pix-code-display" class="mt-4 rounded-[1.25rem] border border-border bg-muted/30 px-4 py-3 font-mono text-[12px] leading-6 text-card-foreground break-all">${pixCode}</div>
+
+          <button id="btn-copy-pix" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition-all hover:brightness-110 shadow-hero-card">
+            <i data-lucide="copy" class="h-4 w-4"></i>
+            Copiar codigo Pix
+          </button>
         </div>
 
-        <h2 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 0.25rem;">Pagamento Pix Gerado!</h2>
-        <p style="font-size: 0.8125rem; color: hsl(var(--muted-foreground)); margin-bottom: 1.25rem;">
-          Copie o código abaixo e pague no seu banco
-        </p>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="bg-card rounded-[1.75rem] border border-border p-4 shadow-product">
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+                <i data-lucide="list-checks" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Como pagar</p>
+                <h3 class="text-lg font-bold text-card-foreground">Siga estes passos</h3>
+              </div>
+            </div>
 
-        <!-- Total -->
-        <div style="background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem;">
-          <p style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.25rem;">Valor total</p>
-          <p style="font-size: 1.5rem; font-weight: 800; color: hsl(var(--success));">${formatPrice(total)}</p>
-        </div>
+            <div class="mt-4 space-y-3">
+              <div class="flex items-start gap-3">
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">1</div>
+                <p class="text-sm leading-relaxed text-muted-foreground">Abra o app do seu banco ou carteira digital.</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">2</div>
+                <p class="text-sm leading-relaxed text-muted-foreground">Escolha pagar com Pix Copia e Cola ou leia o QR Code.</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">3</div>
+                <p class="text-sm leading-relaxed text-muted-foreground">Cole o codigo acima e confira o valor do pedido.</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">4</div>
+                <p class="text-sm leading-relaxed text-muted-foreground">Conclua o pagamento para liberar a confirmacao.</p>
+              </div>
+            </div>
+          </div>
 
-        <!-- PIX Copia e Cola -->
-        <div style="background: hsl(var(--muted) / 0.3); border: 2px dashed hsl(var(--border)); border-radius: 1rem; padding: 1rem; margin-bottom: 1rem;">
-          <p style="font-size: 10px; color: hsl(var(--muted-foreground)); font-weight: 600; margin-bottom: 0.5rem;">PIX COPIA E COLA</p>
-          <div id="pix-code-display" style="font-family: monospace; font-size: 0.6875rem; color: hsl(var(--foreground)); word-break: break-all; line-height: 1.4; max-height: 4rem; overflow-y: auto; background: hsl(var(--card)); border-radius: 0.75rem; padding: 0.75rem; border: 1px solid hsl(var(--border));">${pixCode}</div>
-        </div>
+          <div class="bg-card rounded-[1.75rem] border border-border p-4 shadow-product">
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-success/12 text-success">
+                <i data-lucide="shield" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Pedido protegido</p>
+                <h3 class="text-lg font-bold text-card-foreground">Tudo pronto para confirmar</h3>
+              </div>
+            </div>
 
-        <!-- Copy Button -->
-        <button id="btn-copy-pix" style="width: 100%; background: hsl(var(--success)); color: #fff; border: none; border-radius: 0.75rem; padding: 0.875rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 16px hsl(var(--success) / 0.3); margin-bottom: 1rem;">
-          <i data-lucide="copy" class="w-4 h-4"></i>
-          Copiar código Pix
-        </button>
-
-        <!-- Expiration Timer -->
-        <div style="background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 1rem; padding: 0.75rem; margin-bottom: 1rem;">
-          <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-            <i data-lucide="clock" style="width: 14px; height: 14px; color: hsl(var(--destructive));"></i>
-            <span style="font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground));">Expira em: <span id="pix-timer" style="color: hsl(var(--destructive)); font-weight: 800;">15:00</span></span>
+            <div class="mt-4 space-y-3">
+              <div class="rounded-[1.25rem] bg-muted/30 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Validade do codigo</p>
+                <p class="mt-1 text-sm font-bold text-card-foreground">${expirationLabel}</p>
+              </div>
+              <div class="rounded-[1.25rem] bg-muted/30 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Confirmacao do pedido</p>
+                <p class="mt-1 text-sm text-muted-foreground">Nossa equipe recebe a confirmacao do Pix e inicia a entrega logo em seguida.</p>
+              </div>
+              <div class="rounded-[1.25rem] bg-muted/30 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Precisa de ajuda?</p>
+                <p class="mt-1 text-sm text-muted-foreground">Mantenha esta tela aberta ate concluir o pagamento para evitar qualquer interrupcao.</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Instructions -->
-        <div style="background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 1rem; padding: 1rem; text-align: left; margin-bottom: 1rem;">
-          <p style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem;">Como pagar:</p>
-          <ol style="font-size: 0.6875rem; color: hsl(var(--muted-foreground)); line-height: 1.8; padding-left: 1rem; margin: 0;">
-            <li>Abra o app do seu banco</li>
-            <li>Escolha pagar com <strong>Pix Copia e Cola</strong></li>
-            <li>Cole o código copiado acima</li>
-            <li>Confirme o pagamento</li>
-          </ol>
-        </div>
-
-        <!-- Delivery Info -->
-        <div style="background: hsl(var(--success) / 0.08); border-radius: 1rem; padding: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
-          <i data-lucide="truck" style="width: 16px; height: 16px; color: hsl(var(--success));"></i>
-          <span style="font-size: 0.75rem; font-weight: 600; color: hsl(var(--success));">Entrega em 30-50 min após confirmação</span>
-        </div>
-
-        <a href="/" style="display: inline-flex; align-items: center; gap: 0.5rem; color: hsl(var(--primary)); font-size: 0.75rem; font-weight: 600; text-decoration: none;">
-          ← Voltar para a loja
+        <a href="/" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-bold text-card-foreground shadow-product transition-colors hover:bg-muted/40">
+          <i data-lucide="arrow-left" class="h-4 w-4"></i>
+          Voltar para a loja
         </a>
-      </div>
+      </section>
     `;
 
-    // Copy button handler
-    document.getElementById('btn-copy-pix')?.addEventListener('click', () => {
-      navigator.clipboard.writeText(pixCode).then(() => {
-        const btn = document.getElementById('btn-copy-pix');
-        btn.innerHTML = `
-          <i data-lucide="check" class="w-4 h-4"></i>
-          Código copiado!
+    const copyButton = document.getElementById('btn-copy-pix');
+    copyButton?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pixCode);
+
+        copyButton.innerHTML = `
+          <i data-lucide="check" class="h-4 w-4"></i>
+          Codigo copiado!
         `;
         renderIcons();
-        setTimeout(() => {
-          btn.innerHTML = `
-            <i data-lucide="copy" class="w-4 h-4"></i>
-            Copiar código Pix
+
+        window.setTimeout(() => {
+          copyButton.innerHTML = `
+            <i data-lucide="copy" class="h-4 w-4"></i>
+            Copiar codigo Pix
           `;
           renderIcons();
         }, 3000);
-      });
+      } catch {
+        copyButton.innerHTML = `
+          <i data-lucide="alert-circle" class="h-4 w-4"></i>
+          Copie manualmente o codigo abaixo
+        `;
+        renderIcons();
+      }
     });
 
-    // Expiration countdown
     const timerEl = document.getElementById('pix-timer');
-    const countdown = setInterval(() => {
-      const remaining = Math.max(0, expDate - Date.now());
-      if (remaining <= 0) {
-        clearInterval(countdown);
-        timerEl.textContent = 'Expirado';
+    const updateTimer = () => {
+      if (!timerEl) {
         return;
       }
-      const m = Math.floor(remaining / 60000).toString().padStart(2, '0');
-      const s = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
-      timerEl.textContent = `${m}:${s}`;
+
+      const remaining = Math.max(0, expDate - Date.now());
+
+      if (remaining <= 0) {
+        timerEl.textContent = 'Expirado';
+        return true;
+      }
+
+      timerEl.textContent = formatRemainingTime(remaining);
+      return false;
+    };
+
+    renderIcons();
+
+    if (updateTimer()) {
+      return;
+    }
+
+    const countdown = setInterval(() => {
+      if (updateTimer()) {
+        clearInterval(countdown);
+      }
     }, 1000);
   }
 
