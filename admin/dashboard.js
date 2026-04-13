@@ -87,8 +87,8 @@ async function initApiKeys() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'keys', payload })
       });
-      showFeedback(feedback, '✓ Chaves salvas!', false);
-    } catch { showFeedback(feedback, '⚠ Erro ao salvar', true); }
+      showFeedback(feedback, 'Chaves salvas!', false);
+    } catch { showFeedback(feedback, 'Erro ao salvar', true); }
   });
 }
 
@@ -119,8 +119,8 @@ async function saveSettings(feedbackEl) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'config', payload })
     });
-    showFeedback(feedbackEl, '✓ Configurações salvas!', false);
-  } catch { showFeedback(feedbackEl, '⚠ Erro ao salvar', true); }
+    showFeedback(feedbackEl, 'Configurações salvas!', false);
+  } catch { showFeedback(feedbackEl, 'Erro ao salvar', true); }
 }
 
 // FB PIXELS
@@ -190,9 +190,14 @@ document.getElementById('btn-save-pushcuts')?.addEventListener('click', () => sa
 
 // HELPERS
 function showFeedback(el, text, isError) {
-  el.textContent = text;
+  const icon = isError ? '<i data-lucide="alert-circle" class="w-4 h-4"></i>' : '<i data-lucide="check" class="w-4 h-4"></i>';
+  el.innerHTML = `${icon} <span>${text}</span>`;
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.gap = '0.5rem';
   el.style.color = isError ? '#ef4444' : '#10b981';
   el.style.opacity = '1';
+  lucide.createIcons();
   setTimeout(() => el.style.opacity = '0', 3000);
 }
 

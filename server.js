@@ -181,7 +181,7 @@ app.post('/api/pix/webhook', async (req, res) => {
     const itemTitle = payload?.data?.items?.[0]?.title || 'Pedido';
     const amountStr = `R$${amount.toFixed(2).replace('.', ',')}`;
 
-    console.log(`[💰 VENDA PAGA] ${customerName} — ${amountStr} — ${itemTitle}`);
+    console.log(`[PAYMENT RECEIVED] ${customerName} — ${amountStr} — ${itemTitle}`);
 
     const config = getConfig();
 
@@ -194,7 +194,7 @@ app.post('/api/pix/webhook', async (req, res) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title: '💰 Venda Paga!',
+            title: 'Venda Paga!',
             text: `${customerName} — ${amountStr} — ${itemTitle}`
           })
         });
@@ -243,7 +243,7 @@ app.post('/api/pix/webhook', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Ligeirinho API Server running on http://localhost:${PORT}`);
+  console.log(`\nLigeirinho API Server running on http://localhost:${PORT}`);
   console.log(`   POST /api/pix/create    — Create PIX charge`);
   console.log(`   POST /api/pix/webhook   — Payment webhook (Titans Hub)`);
   console.log(`   POST /api/keys          — Save API keys`);

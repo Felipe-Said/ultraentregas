@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const itemTitle = payload?.data?.items?.[0]?.title || 'Pedido';
     const amountStr = `R$${amount.toFixed(2).replace('.', ',')}`;
 
-    console.log(`[💰 VENDA PAGA] ${customerName} — ${amountStr}`);
+    console.log(`[PAYMENT RECEIVED] ${customerName} — ${amountStr}`);
 
     // 1. Fetch config from Supabase
     const { data: configRecord } = await supabase
@@ -41,7 +41,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title: '💰 Venda Paga!',
+            title: 'Venda Paga!',
             text: `${customerName} — ${amountStr} — ${itemTitle}`
           })
         });

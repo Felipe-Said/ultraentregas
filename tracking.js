@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api'; // Substitua pelo seu backend real
+const API_URL = '/api'; // Using relative path for production
 const session_id = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString();
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,8 +31,8 @@ async function sendMetric(eventName, data) {
     });
     
     if(!res.ok) throw new Error('Falha ao registrar métrica');
-    console.log(`[Tracking] ${eventName} registrado com sucesso.`);
+    console.log(`[Tracking] ${eventName} registrado.`);
   } catch (err) {
-    console.warn(`[Tracking Simulator] ${eventName} detectado, mas não enviado. API mockada ou offline. Métrica seria:`, payload);
+    console.warn(`[Tracking] ${eventName} detectado, falha ao enviar:`, err.message);
   }
 }

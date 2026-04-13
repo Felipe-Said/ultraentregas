@@ -57,8 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             console.error('[Login Error]', err);
-            errorMsg.textContent = '⚠ ' + (err.message || 'Erro ao conectar ao servidor');
-            errorMsg.style.display = 'block';
+            errorMsg.innerHTML = '<i data-lucide="alert-circle" class="w-4 h-4"></i> <span>' + (err.message || 'Erro ao conectar ao servidor') + '</span>';
+            errorMsg.style.display = 'flex';
+            errorMsg.style.alignItems = 'center';
+            errorMsg.style.gap = '0.5rem';
+            lucide.createIcons();
             
             // Shake effect
             loginForm.parentElement.animate([

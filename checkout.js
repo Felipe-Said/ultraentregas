@@ -152,8 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.bairro) bairroInput.value = data.bairro;
         if (data.localidade) cidadeInput.value = data.localidade;
         if (data.uf) ufInput.value = data.uf;
-        btnCep.textContent = '✓';
+        btnCep.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
         btnCep.style.background = 'hsl(var(--success))';
+        lucide.createIcons();
         numInput?.focus();
       } else {
         btnCep.textContent = 'Buscar';
@@ -219,7 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Show loading
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = '<span class="animate-pulse">⏳ Gerando Pix...</span>';
+    confirmBtn.innerHTML = '<span class="flex items-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Gerando Pix...</span>';
+    lucide.createIcons();
 
     const orderPayload = {
       amount: amountCents,
@@ -278,7 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('[PIX Error]', err);
       confirmBtn.disabled = false;
-      confirmBtn.innerHTML = '✓ Confirmar Pedido';
+      confirmBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-2"></i> Confirmar Pedido';
+      lucide.createIcons();
 
       // Show error inline
       const container = confirmBtn.parentElement;
@@ -290,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       errEl.innerHTML = `
         <div class="mt-3 p-3 bg-destructive/10 rounded-xl text-xs text-destructive font-semibold flex items-center gap-2">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+          <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
           ${err.message}
         </div>
       `;
@@ -308,12 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div style="text-align: center; padding: 1.5rem 0;">
         <!-- PIX Icon -->
         <div style="width: 72px; height: 72px; background: hsl(var(--success) / 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--success))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7.5 11.5 10 9l4 4-2.5 2.5"/>
-            <path d="M14 6.5l3.5 3.5-3.5 3.5"/>
-            <path d="M10 17.5L6.5 14l3.5-3.5"/>
-            <rect x="2" y="2" width="20" height="20" rx="4"/>
-          </svg>
+          <i data-lucide="qr-code" style="width: 36px; height: 36px; color: hsl(var(--success));"></i>
         </div>
 
         <h2 style="font-size: 1.125rem; font-weight: 800; margin-bottom: 0.25rem;">Pagamento Pix Gerado!</h2>
@@ -335,14 +333,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Copy Button -->
         <button id="btn-copy-pix" style="width: 100%; background: hsl(var(--success)); color: #fff; border: none; border-radius: 0.75rem; padding: 0.875rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 16px hsl(var(--success) / 0.3); margin-bottom: 1rem;">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <i data-lucide="copy" class="w-4 h-4"></i>
           Copiar código Pix
         </button>
 
         <!-- Expiration Timer -->
         <div style="background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 1rem; padding: 0.75rem; margin-bottom: 1rem;">
           <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-            <svg width="14" height="14" fill="none" stroke="hsl(var(--destructive))" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <i data-lucide="clock" style="width: 14px; height: 14px; color: hsl(var(--destructive));"></i>
             <span style="font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground));">Expira em: <span id="pix-timer" style="color: hsl(var(--destructive)); font-weight: 800;">15:00</span></span>
           </div>
         </div>
@@ -360,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Delivery Info -->
         <div style="background: hsl(var(--success) / 0.08); border-radius: 1rem; padding: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
-          <svg width="16" height="16" fill="none" stroke="hsl(var(--success))" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <i data-lucide="truck" style="width: 16px; height: 16px; color: hsl(var(--success));"></i>
           <span style="font-size: 0.75rem; font-weight: 600; color: hsl(var(--success));">Entrega em 30-50 min após confirmação</span>
         </div>
 
@@ -375,14 +373,16 @@ document.addEventListener('DOMContentLoaded', () => {
       navigator.clipboard.writeText(pixCode).then(() => {
         const btn = document.getElementById('btn-copy-pix');
         btn.innerHTML = `
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <i data-lucide="check" class="w-4 h-4"></i>
           Código copiado!
         `;
+        lucide.createIcons();
         setTimeout(() => {
           btn.innerHTML = `
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <i data-lucide="copy" class="w-4 h-4"></i>
             Copiar código Pix
           `;
+          lucide.createIcons();
         }, 3000);
       });
     });
@@ -405,4 +405,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial validation
   validateStep1();
   validateStep2();
+  lucide.createIcons();
 });

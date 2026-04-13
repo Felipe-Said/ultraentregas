@@ -118,9 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <p class="text-sm font-extrabold text-primary mt-0.5">${item.originalPrice}</p>
         </div>
         <div class="flex items-center gap-1 shrink-0">
-          <button onclick="window.__cartUpdateQty(${i}, -1)" class="h-7 w-7 rounded-lg border border-border flex items-center justify-center text-muted-foreground font-bold text-sm hover:bg-muted transition-colors active:scale-95">−</button>
+          <button onclick="window.__cartUpdateQty(${i}, -1)" class="h-7 w-7 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:bg-muted transition-colors active:scale-95"><i data-lucide="minus" class="w-3.5 h-3.5"></i></button>
           <span class="text-sm font-bold text-card-foreground w-6 text-center">${item.qty}</span>
-          <button onclick="window.__cartUpdateQty(${i}, 1)" class="h-7 w-7 rounded-lg border border-border flex items-center justify-center text-card-foreground font-bold text-sm hover:bg-muted transition-colors active:scale-95">+</button>
+          <button onclick="window.__cartUpdateQty(${i}, 1)" class="h-7 w-7 rounded-lg border border-border flex items-center justify-center text-card-foreground hover:bg-muted transition-colors active:scale-95"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
         </div>
       </div>
     `).join('');
@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!cepValidated) {
       cartEntregaEl.innerHTML = '<span class="text-primary cursor-pointer text-xs">Informe o CEP</span>';
     }
+    lucide.createIcons();
   }
 
   // Expose to inline onclick handlers
@@ -237,9 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Button feedback
       const originalHTML = btn.innerHTML;
-      btn.innerHTML = `<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>Adicionado!`;
+      btn.innerHTML = `<i data-lucide="check" class="h-3.5 w-3.5"></i> <span>Adicionado!</span>`;
       btn.classList.add('bg-success');
       btn.classList.remove('bg-primary');
+      lucide.createIcons();
       
       setTimeout(() => {
         btn.innerHTML = originalHTML;
@@ -308,9 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cartEntregaEl.classList.add('text-success', 'font-bold');
     }
     if (cartCepBtn) {
-      cartCepBtn.textContent = '✓';
+      cartCepBtn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
       cartCepBtn.classList.add('bg-success', 'text-white');
       cartCepBtn.classList.remove('bg-primary');
+      lucide.createIcons();
     }
     renderCart();
     window.dispatchEvent(new CustomEvent('track-event', {
@@ -389,6 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial render
   renderCart();
+  lucide.createIcons();
 
   // ─── Auto-detect CEP on page load ───
   (async () => {
