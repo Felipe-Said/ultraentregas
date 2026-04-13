@@ -423,7 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function showPixScreen(pixCode, expiration, total, qrCodeImage = '') {
-    const container = document.querySelector('.mx-auto.max-w-lg');
+    const container = document.getElementById('checkout-shell');
+
+    if (!container) {
+      throw new Error('Container principal do checkout nao encontrado.');
+    }
+
     const pixQrCodeSrc = qrCodeImage || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixCode)}`;
 
     // Calculate expiration countdown
