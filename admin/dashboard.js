@@ -5,6 +5,22 @@ let fbPixels = [];
 let gtags = [];
 let pushcuts = [];
 
+function updateApiStatusBadges(keys = {}) {
+  const hasKeys = Boolean(keys.publicKey && keys.secretKey);
+  const topBadge = document.getElementById('api-status-badge');
+  const navBadge = document.getElementById('nav-api-badge');
+
+  if (topBadge) {
+    topBadge.textContent = hasKeys ? 'Chaves OK' : 'Sem chaves';
+    topBadge.className = `admin-badge ${hasKeys ? 'admin-badge-active' : 'admin-badge-inactive'}`;
+  }
+
+  if (navBadge) {
+    navBadge.textContent = hasKeys ? 'OK' : '—';
+    navBadge.className = `admin-badge ${hasKeys ? 'admin-badge-active' : 'admin-badge-inactive'}`;
+  }
+}
+
 function getAuthHeaders() {
   const token = localStorage.getItem('aquagas_admin_token');
   return token
@@ -112,9 +128,11 @@ async function initApiKeys() {
       publicInput.value = data.keys.publicKey || '';
       secretInput.value = data.keys.secretKey || '';
     }
+    updateApiStatusBadges(data.keys || {});
   } catch (err) {
     if (handleUnauthorized(err.message)) return;
     console.warn('[Admin] Erro ao buscar chaves:', err);
+    updateApiStatusBadges({});
   }
 
   saveBtn.addEventListener('click', async () => {
@@ -128,6 +146,7 @@ async function initApiKeys() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Erro ao salvar chaves');
       }
+      updateApiStatusBadges(payload);
       showFeedback(feedback, 'Chaves salvas!', false);
     } catch (err) {
       if (handleUnauthorized(err.message)) return;
