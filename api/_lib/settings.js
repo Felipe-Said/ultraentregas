@@ -1,4 +1,13 @@
 import { getSupabase } from './supabase.js';
+import { promises as fs } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const ROOT_DIR = fileURLToPath(new URL('../../', import.meta.url));
+const LOCAL_SETTINGS_FILES = {
+  api_keys: path.join(ROOT_DIR, '.api-keys.json'),
+  tracking_config: path.join(ROOT_DIR, '.admin-config.json')
+};
 
 export const DEFAULT_TRACKING_CONFIG = {
   pixels: [],
@@ -52,28 +61,83 @@ export function normalizeApiKeys(keys = {}) {
   };
 }
 
-export async function getSetting(id, fallbackValue) {
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from('settings')
-    .select('data')
-    .eq('id', id)
-    .maybeSingle();
+async function readLocalSetting(id) {
+  const filePath = LOCAL_SETTINGS_FILES[id];
 
-  if (error) {
+  if (!filePath) {
+    return undefined;
+  }
+
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+}
+
+async function writeLocalSetting(id, data) {
+  const filePath = LOCAL_SETTINGS_FILES[id];
+
+  if (!filePath) {
+    return false;
+  }
+
+  await fs.writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
+  return true;
+}
+
+export async function getSetting(id, fallbackValue) {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('settings')
+      .select('data')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data?.data !== undefined && data?.data !== null) {
+      return data.data;
+    }
+  } catch (error) {
+    const localSetting = await readLocalSetting(id);
+
+    if (localSetting !== undefined) {
+      return localSetting;
+    }
+
+    if (fallbackValue !== undefined) {
+      return fallbackValue;
+    }
+
     throw error;
   }
 
-  return data?.data ?? fallbackValue;
+  const localSetting = await readLocalSetting(id);
+  return localSetting ?? fallbackValue;
 }
 
 export async function upsertSetting(id, data) {
-  const supabase = getSupabase();
-  const { error } = await supabase
-    .from('settings')
-    .upsert({ id, data }, { onConflict: 'id' });
+  try {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('settings')
+      .upsert({ id, data }, { onConflict: 'id' });
 
-  if (error) {
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    const wroteLocal = await writeLocalSetting(id, data).catch(() => false);
+
+    if (wroteLocal) {
+      return;
+    }
+
     throw error;
   }
 }

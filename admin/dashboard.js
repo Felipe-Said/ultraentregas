@@ -120,14 +120,18 @@ async function initApiKeys() {
   saveBtn.addEventListener('click', async () => {
     const payload = { publicKey: publicInput.value.trim(), secretKey: secretInput.value.trim() };
     try {
-      await fetch(`${API_URL}/settings`, {
+      const res = await fetch(`${API_URL}/settings`, {
         method: 'POST', headers: getAuthHeaders(),
         body: JSON.stringify({ type: 'keys', payload })
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao salvar chaves');
+      }
       showFeedback(feedback, 'Chaves salvas!', false);
     } catch (err) {
       if (handleUnauthorized(err.message)) return;
-      showFeedback(feedback, 'Erro ao salvar', true);
+      showFeedback(feedback, err.message || 'Erro ao salvar', true);
     }
   });
 }
@@ -164,14 +168,18 @@ async function loadSettings() {
 async function saveSettings(feedbackEl) {
   const payload = { pixels: fbPixels, gtags, pushcuts };
   try {
-    await fetch(`${API_URL}/settings`, {
+    const res = await fetch(`${API_URL}/settings`, {
       method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ type: 'config', payload })
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Erro ao salvar configurações');
+    }
     showFeedback(feedbackEl, 'Configurações salvas!', false);
   } catch (err) {
     if (handleUnauthorized(err.message)) return;
-    showFeedback(feedbackEl, 'Erro ao salvar', true);
+    showFeedback(feedbackEl, err.message || 'Erro ao salvar', true);
   }
 }
 
